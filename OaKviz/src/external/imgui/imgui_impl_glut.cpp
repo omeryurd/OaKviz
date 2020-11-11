@@ -24,6 +24,7 @@
 
 #include "imgui.h"
 #include "imgui_impl_glut.h"
+#include <stdio.h>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
@@ -84,8 +85,8 @@ void ImGui_ImplGLUT_InstallFuncs()
 #ifdef __FREEGLUT_EXT_H__
     glutMouseWheelFunc(ImGui_ImplGLUT_MouseWheelFunc);
 #endif
-    glutKeyboardFunc(ImGui_ImplGLUT_KeyboardFunc);
-    glutKeyboardUpFunc(ImGui_ImplGLUT_KeyboardUpFunc);
+    //glutKeyboardFunc(ImGui_ImplGLUT_KeyboardFunc);
+    //glutKeyboardUpFunc(ImGui_ImplGLUT_KeyboardUpFunc);
     glutSpecialFunc(ImGui_ImplGLUT_SpecialFunc);
     glutSpecialUpFunc(ImGui_ImplGLUT_SpecialUpFunc);
 }
@@ -136,13 +137,27 @@ void ImGui_ImplGLUT_KeyboardFunc(unsigned char c, int x, int y)
         io.KeysDown[c] = io.KeysDown[c - 'A' + 'a'] = true;
     else
         io.KeysDown[c] = true;
+   /* if (c == 'x') {
+
+        
+
+    }
+    else if (c == 'y') {
+
+        glRotatef(15, 0.0, 1.0, 0.0);
+    }
+    else if (c == 'z') {
+
+        glRotatef(15, 0, 0, 1.0);
+    }
+    glutPostRedisplay();*/
     ImGui_ImplGLUT_UpdateKeyboardMods();
     (void)x; (void)y; // Unused
 }
 
 void ImGui_ImplGLUT_KeyboardUpFunc(unsigned char c, int x, int y)
 {
-    //printf("char_up_func %d '%c'\n", c, c);
+   
     ImGuiIO& io = ImGui::GetIO();
     if (c >= 1 && c <= 26)
         io.KeysDown[c] = io.KeysDown[c - 1 + 'a'] = io.KeysDown[c - 1 + 'A'] = false;
@@ -152,7 +167,21 @@ void ImGui_ImplGLUT_KeyboardUpFunc(unsigned char c, int x, int y)
         io.KeysDown[c] = io.KeysDown[c - 'A' + 'a'] = false;
     else
         io.KeysDown[c] = false;
-    ImGui_ImplGLUT_UpdateKeyboardMods();
+    /*if (c == 'x') {
+
+        glRotatef(15, 1.0, 0, 0);
+
+    }
+    else if (c == 'y') {
+
+        glRotatef(15, 0.0, 1.0, 0.0);
+    }
+    else if (c == 'z') {
+
+        glRotatef(15, 0, 0, 1.0);
+    }
+    glutPostRedisplay();
+    ImGui_ImplGLUT_UpdateKeyboardMods();*/
     (void)x; (void)y; // Unused
 }
 
