@@ -12,30 +12,31 @@
 #include "FileBrowser/ImGuiFileBrowser.h"
 #include "OBJLoader/OBJ_Loader.h"
 #include "glm/vec3.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
+#include "Application.h"
 #include <GL/glew.h>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
 #include <GL/freeglut.h>
+#include <algorithm>
 #endif
 
 #ifdef _MSC_VER
 #pragma warning (disable: 4505) // unreferenced local function has been removed
 #endif
 
-void showMainMenu();
-void loadObj(void);
-void my_display_code(void);
-void glut_display_func(void);
-void glut_keyboard_func(unsigned char c, int x, int y);
 
+
+//void mouse_callback_func(int button, int state, int x, int y);
 // Our state
 static bool show_demo_window = true;
 static bool show_another_window = false;
 static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+static ImVec4 clear_color2 = ImVec4(0.35f, 0.45f, 0.60f, 1.00f);
 objl::Loader Loader;
 GLfloat ambient_light[] = { 0.6, 0.6, 0.6, 1.0 };
 GLfloat diffuse_light[] = { 0.4, 0.4, 0.4, 1.0 };
@@ -45,6 +46,27 @@ GLfloat light_position[] = { 0.5,0.5, 1.2 , 1.0};
 objl::Vector3 mRotate(0.0, 0.0, 0.0);
 objl::Vector3 mTranslate(0.0, 0.0, 0.0);
 float angleM = 0;
+std::vector<objl::Loader*> loadedObjs;
+static float xCoord = 0.0f;
+static float yCoord = 0.0f;
+static float zCoord = 0.0f;
+
+//// camera
+//glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+//glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+//glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+//
+//bool firstMouse = true;
+//float yaw = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
+//float pitch = 0.0f;
+//float lastX = 800.0f / 2.0;
+//float lastY = 600.0 / 2.0;
+//float fov = 45.0f;
+//
+//// timing
+//float deltaTime = 0.0f;	// time between current frame and last frame
+//float lastFrame = 0.0f;
+
 
 // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
 // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
@@ -53,21 +75,21 @@ float angleM = 0;
 
 int main(int argc, char** argv)
 {
-    loadObj();
-    // Create GLUT window
-    glutInit(&argc, argv);
-#ifdef __FREEGLUT_EXT_H__
-    glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
-#endif
-    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_MULTISAMPLE | GLUT_DEPTH);
-    glutInitWindowSize(1280, 720);
-    glutCreateWindow("Dear ImGui GLUT+OpenGL2 Example");
+    //const char* pathName = "box_stack.obj";
+    
+    //loadObj(pathName);
+    // Create GLUT windows
+    init_window(argc, argv);
+
+ 
 
     glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
     glShadeModel(GL_SMOOTH);
-    //glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient_light); 
+    //glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient_light);
+    
     glMatrixMode(GL_MODELVIEW); 
     glLoadIdentity();
+    glEnable(GL_RESCALE_NORMAL);
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
@@ -78,13 +100,14 @@ int main(int argc, char** argv)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(45, (16.0/9.0), 0.1, 20);
-    gluLookAt(0, 0.0 ,5, 0, 0, 0, 0, 1, 0);
+    //gluLookAt(0, 0.0 ,5, 0, 0, 0, 0, 1, 0);
     //glFrustum(-5.0, 5.0, -5.0, 5.0, 0.1, 5.0);
     glutDisplayFunc(glut_display_func);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glutDisplayFunc(glut_display_func);
-    glutKeyboardFunc(glut_keyboard_func);
+    //glutKeyboardFunc(glut_keyboard_func);
+    //glutMouseFunc(mouse_callback_func);
     //glRotatef(30, 1, 1.0, 0.0);
     
 
@@ -132,6 +155,24 @@ int main(int argc, char** argv)
     return 0;
 }
 
+
+//Window Initializatioon
+void init_window(int argc, char** argv) {
+    glutInit(&argc, argv);
+       glutInit(&argc, argv);
+#ifdef __FREEGLUT_EXT_H__
+    glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+#endif
+    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_MULTISAMPLE | GLUT_DEPTH);
+    glutInitWindowSize(1280, 720);
+    glutCreateWindow("OakViz");
+}
+
+void normalizeCoordinates() {
+    //Normalize Vertices
+    
+}
+
 void showMainMenu()
 {
     static imgui_addons::ImGuiFileBrowser file_dialog;
@@ -162,6 +203,9 @@ void showMainMenu()
     if (file_dialog.showFileDialog("Open File", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".obj,.zip,.7z"))
     {
         std::cout << file_dialog.selected_fn << std::endl;      // The name of the selected file or directory in case of Select Directory dialog mode
+        const char* pathName = file_dialog.selected_fn.c_str();
+
+        addToScene(loadedObjs, pathName);
         std::cout << file_dialog.selected_path << std::endl;    // The absolute path to the selected file
     }
     if (file_dialog.showFileDialog("Save File", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700, 310), ".png,.jpg,.bmp"))
@@ -213,7 +257,6 @@ void glut_keyboard_func(unsigned char c, int x, int y) {
    else if (c == 'o') {
        mTranslate.Z -= 0.2;
    }
-   
 
    glutPostRedisplay();
 }
@@ -226,7 +269,9 @@ void my_display_code()
 
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
-        static float f = 0.0f;
+        /*static float x = 0.0f;
+        static float y = 0.0f;
+        static float z = 0.0f;*/
         static int counter = 0;
 
         ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
@@ -234,10 +279,14 @@ void my_display_code()
         ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
         ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
         ImGui::Checkbox("Another Window", &show_another_window);
-
-        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+        for (int l = 0; l < loadedObjs.size(); l++) {
+            ImGui::Text("Rotation");
+            ImGui::SliderFloat("X:", &loadedObjs[l]->rotate.X, -180.0f, 180.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::SliderFloat("Y:", &loadedObjs[l]->rotate.Y, -180.0f, 180.0f);
+            ImGui::SliderFloat("Z:", &loadedObjs[l]->rotate.Z, -180.0f, 180.0f);
+        }
         ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
+        ImGui::ColorEdit3("disffuse color", (float*)&clear_color2);
         if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
             counter++;
         ImGui::SameLine();
@@ -273,44 +322,85 @@ void glut_display_func()
     glColor3f(1.0, 0.0, 0.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    myLookAt();
     glRotatef(angleM, mRotate.X, mRotate.Y, mRotate.Z);
     glTranslatef(mTranslate.X, mTranslate.Y, mTranslate.Z);
 
     int k = 0;
     float clearCol[] = {clear_color.x, clear_color.y, clear_color.z};
-    for(int i = 0; i < Loader.LoadedMeshes.size(); i++) {
-        objl::Mesh currentMesh = Loader.LoadedMeshes[i];
-        
+    float clearCol2[] = { clear_color2.x, clear_color2.y, clear_color2.z};
+    //for(int l = 0; l< loadedObjs.size(); l++)
+    //for(int i = 0; i < Loader.LoadedMeshes.size(); i++) {
+    //    objl::Mesh currentMesh = Loader.LoadedMeshes[i];
+    //    
 
-        for(int j = 0, ct = 0; j < currentMesh.Indices.size(); j += 3) {
-            
-           if(j % 6 == 0 && j != 0) {
-                  ct+=3;
-           }
+    //    for(int j = 0, ct = 0; j < currentMesh.Indices.size(); j += 3) {
+    //        
+    //       if(j % 6 == 0 && j != 0) {
+    //              ct+=3;
+    //       }
 
-            glBegin(GL_TRIANGLES);
-            //glNormal3i(currentMesh.Vertices[i].Normal.X, currentMesh.Vertices[i].Normal.Y, Loader.LoadedVertices[i].Normal.Z);
-            //std::cout << currentMesh.Indices[0] << " " << currentMesh.Vertices[i].Position.Y << " " << currentMesh.Vertices[i].Position.Z << std::endl;
-            glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, clearCol);
-            
-            glNormal3f(currentMesh.Vertices[currentMesh.Indices[j]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Z);
-            glVertex3f(currentMesh.Vertices[currentMesh.Indices[j]].Position.X, currentMesh.Vertices[currentMesh.Indices[j]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j]].Position.Z);
+    //        glBegin(GL_TRIANGLES);
+    //        //glNormal3i(currentMesh.Vertices[i].Normal.X, currentMesh.Vertices[i].Normal.Y, Loader.LoadedVertices[i].Normal.Z);
+    //        //std::cout << currentMesh.Indices[0] << " " << currentMesh.Vertices[i].Position.Y << " " << currentMesh.Vertices[i].Position.Z << std::endl;
+    //        glMaterialfv(GL_FRONT, GL_AMBIENT, clearCol);
+    //        glMaterialfv(GL_FRONT, GL_DIFFUSE, clearCol2);
+    //        
+    //        glNormal3f(currentMesh.Vertices[currentMesh.Indices[j]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Z);
+    //        glVertex3f(currentMesh.Vertices[currentMesh.Indices[j]].Position.X, currentMesh.Vertices[currentMesh.Indices[j]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j]].Position.Z);
 
-            glNormal3f(currentMesh.Vertices[currentMesh.Indices[j+1]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j+1]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j+1]].Normal.Z);
-            glVertex3f(currentMesh.Vertices[currentMesh.Indices[j+1]].Position.X, currentMesh.Vertices[currentMesh.Indices[j+1]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j+1]].Position.Z);
+    //        glNormal3f(currentMesh.Vertices[currentMesh.Indices[j+1]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j+1]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j+1]].Normal.Z);
+    //        glVertex3f(currentMesh.Vertices[currentMesh.Indices[j+1]].Position.X, currentMesh.Vertices[currentMesh.Indices[j+1]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j+1]].Position.Z);
 
-            glNormal3f(currentMesh.Vertices[currentMesh.Indices[j+2]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j+2]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j+2]].Normal.Z);
-            glVertex3f(currentMesh.Vertices[currentMesh.Indices[j+2]].Position.X, currentMesh.Vertices[currentMesh.Indices[j+2]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j+2]].Position.Z);
+    //        glNormal3f(currentMesh.Vertices[currentMesh.Indices[j+2]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j+2]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j+2]].Normal.Z);
+    //        glVertex3f(currentMesh.Vertices[currentMesh.Indices[j+2]].Position.X, currentMesh.Vertices[currentMesh.Indices[j+2]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j+2]].Position.Z);
 
-            glEnd();
+    //        glEnd();
 
-            
-        }
-         
+    //        
+    //    }
+    //     
    
-    }
+    //}
+    for (int l = 0; l < loadedObjs.size(); l++){
+        glTranslatef(loadedObjs[l]->translate.X, loadedObjs[l]->translate.Y, loadedObjs[l]->translate.Z);
+        //glTranslatef(xCoord, yCoord, zCoord);
+        glRotatef(loadedObjs[l]->rotate.X, 1.0, 0.0, 0.0);
+        glRotatef(loadedObjs[l]->rotate.Y, 0.0, 1.0, 0.0);
+        glRotatef(loadedObjs[l]->rotate.Z, 0.0, 0.0, 1.0);
+        glScalef(loadedObjs[l]->scale.X, loadedObjs[l]->scale.Y, loadedObjs[l]->scale.Z);
 
-    
+        for (int i = 0; i < loadedObjs[l]->LoadedMeshes.size(); i++) {
+            objl::Mesh currentMesh = loadedObjs[l]->LoadedMeshes[i];
+
+            for (int j = 0, ct = 0; j < currentMesh.Indices.size(); j += 3) {
+
+                if (j % 6 == 0 && j != 0) {
+                    ct += 3;
+                }
+
+                glBegin(GL_TRIANGLES);
+                //glNormal3i(currentMesh.Vertices[i].Normal.X, currentMesh.Vertices[i].Normal.Y, Loader.LoadedVertices[i].Normal.Z);
+                //std::cout << currentMesh.Indices[0] << " " << currentMesh.Vertices[i].Position.Y << " " << currentMesh.Vertices[i].Position.Z << std::endl;
+                glMaterialfv(GL_FRONT, GL_AMBIENT, clearCol);
+                glMaterialfv(GL_FRONT, GL_DIFFUSE, clearCol2);
+
+                glNormal3f(currentMesh.Vertices[currentMesh.Indices[j]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Z);
+                glVertex3f(currentMesh.Vertices[currentMesh.Indices[j]].Position.X, currentMesh.Vertices[currentMesh.Indices[j]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j]].Position.Z);
+
+                glNormal3f(currentMesh.Vertices[currentMesh.Indices[j + 1]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j + 1]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j + 1]].Normal.Z);
+                glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Z);
+
+                glNormal3f(currentMesh.Vertices[currentMesh.Indices[j + 2]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j + 2]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j + 2]].Normal.Z);
+                glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Z);
+
+                glEnd();
+
+
+            }
+
+        }
+    }
 
     ImGui_ImplOpenGL2_NewFrame();
     ImGui_ImplGLUT_NewFrame();
@@ -328,12 +418,29 @@ void glut_display_func()
     glutPostRedisplay();
 }
 
-void loadObj() {
+
+void addToScene(std::vector<objl::Loader*> &loadedObjs, const char* path) {
+    loadedObjs.push_back(loadObject(path));
+}
+
+objl::Loader* loadObject(const char* path) {
+    objl::Loader* loader = new objl::Loader();
+    if(!loader) {
+        perror("Unable to Allocate Space in the Heap\n");
+        return NULL;
+    }
+    bool loadout = loader->LoadFile(path);
+    if (!loadout) {
+        return NULL;
+    }
+    return loader;
+}
+
+void loadObj(const char * path) {
     // Initialize Loader
-    
 
     // Load .obj File
-    bool loadout = Loader.LoadFile("house.obj");
+    bool loadout = Loader.LoadFile(path);
 
     // Check to see if it loaded
 
@@ -410,3 +517,4 @@ void loadObj() {
         file.close();
     }
 }
+

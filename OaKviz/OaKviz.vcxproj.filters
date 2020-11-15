@@ -920,6 +920,18 @@
     <ClInclude Include="src\external\FileBrowser\ImGuiFileBrowser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\external\OBJLoader\OBJ_Loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\Mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\global_init.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Application.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\external\glm\detail\func_common.inl">

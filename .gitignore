@@ -362,6 +362,6 @@ MigrationBackup/
 FodyWeavers.xsd
 
 #freeglut-glew dll files
-OaKviz/freeglut.dll/
-OaKviz/glew32.dll/
-OaKviz/imgui.ini/
+OaKviz/freeglut.dll
+OaKviz/glew32.dll
+OaKviz/imgui.ini

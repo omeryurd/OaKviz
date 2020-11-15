@@ -24,6 +24,10 @@
 
 #include "imgui.h"
 #include "imgui_impl_glut.h"
+#include "../../src/global_init.h"
+
+
+
 #include <stdio.h>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -85,8 +89,8 @@ void ImGui_ImplGLUT_InstallFuncs()
 #ifdef __FREEGLUT_EXT_H__
     glutMouseWheelFunc(ImGui_ImplGLUT_MouseWheelFunc);
 #endif
-    //glutKeyboardFunc(ImGui_ImplGLUT_KeyboardFunc);
-    //glutKeyboardUpFunc(ImGui_ImplGLUT_KeyboardUpFunc);
+    glutKeyboardFunc(ImGui_ImplGLUT_KeyboardFunc);
+    glutKeyboardUpFunc(ImGui_ImplGLUT_KeyboardUpFunc);
     glutSpecialFunc(ImGui_ImplGLUT_SpecialFunc);
     glutSpecialUpFunc(ImGui_ImplGLUT_SpecialUpFunc);
 }
@@ -105,7 +109,6 @@ void ImGui_ImplGLUT_NewFrame()
         delta_time_ms = 1;
     io.DeltaTime = delta_time_ms / 1000.0f;
     g_Time = current_time;
-
     // Start the frame
     ImGui::NewFrame();
 }
@@ -137,20 +140,21 @@ void ImGui_ImplGLUT_KeyboardFunc(unsigned char c, int x, int y)
         io.KeysDown[c] = io.KeysDown[c - 'A' + 'a'] = true;
     else
         io.KeysDown[c] = true;
-   /* if (c == 'x') {
-
-        
-
-    }
-    else if (c == 'y') {
-
-        glRotatef(15, 0.0, 1.0, 0.0);
-    }
-    else if (c == 'z') {
-
-        glRotatef(15, 0, 0, 1.0);
-    }
-    glutPostRedisplay();*/
+    int current_time = glutGet(GLUT_ELAPSED_TIME);
+    int delta_time_ms = (current_time - g_Time);
+    if (delta_time_ms <= 0)
+        delta_time_ms = 1;
+    io.DeltaTime = delta_time_ms / 1000.0f;
+    float cameraSpeed = 50.0* io.DeltaTime;
+    if (c == 'W')
+        cameraPos += cameraSpeed * cameraFront;
+    if (c == 'S')
+        cameraPos -= cameraSpeed * cameraFront;
+    if (c == 'A')
+        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    if (c == 'D')
+        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    glutPostRedisplay();
     ImGui_ImplGLUT_UpdateKeyboardMods();
     (void)x; (void)y; // Unused
 }
@@ -217,6 +221,42 @@ void ImGui_ImplGLUT_MouseFunc(int glut_button, int state, int x, int y)
         io.MouseDown[button] = true;
     if (button != -1 && state == GLUT_UP)
         io.MouseDown[button] = false;
+    //ImGui::IsMouseDragging(io.MouseDown[1]);
+    //ImGui::IsMouseDragging(ImGuiMouseButton_::ImGuiMouseButton_Right
+   
+    if (glut_button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+        if (firstMouse)
+        {
+            lastX = io.MousePos.x;
+            lastY = io.MousePos.y;
+            firstMouse = false;
+        }
+
+        float xoffset = io.MousePos.x - lastX;
+        float yoffset = lastY - io.MousePos.y; // reversed since y-coordinates go from bottom to top
+        lastX = io.MousePos.x;
+        lastY = io.MousePos.y;
+        
+        float sensitivity = 0.05f; // change this value to your liking
+        xoffset *= sensitivity;
+        yoffset *= sensitivity;
+
+        yaw += xoffset;
+        pitch += yoffset;
+
+        // make sure that when pitch is out of bounds, screen doesn't get flipped
+        if (pitch > 89.0f)
+            pitch = 89.0f;
+        if (pitch < -89.0f)
+            pitch = -89.0f;
+
+        glm::vec3 front;
+        front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        front.y = sin(glm::radians(pitch));
+        front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        cameraFront = glm::normalize(front);
+    }
+    glutPostRedisplay();
 }
 
 #ifdef __FREEGLUT_EXT_H__
@@ -242,4 +282,9 @@ void ImGui_ImplGLUT_MotionFunc(int x, int y)
 {
     ImGuiIO& io = ImGui::GetIO();
     io.MousePos = ImVec2((float)x, (float)y);
+}
+
+void myLookAt() {
+    glm::vec3 cameraTarget = cameraPos + cameraFront;
+    gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z, cameraTarget.x, cameraTarget.y, cameraTarget.z, cameraUp.x, cameraUp.y, cameraUp.z);
 }
