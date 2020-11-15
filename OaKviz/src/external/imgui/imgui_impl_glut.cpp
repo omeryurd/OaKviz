@@ -224,28 +224,31 @@ void ImGui_ImplGLUT_MouseFunc(int glut_button, int state, int x, int y)
     //ImGui::IsMouseDragging(io.MouseDown[1]);
     //ImGui::IsMouseDragging(ImGuiMouseButton_::ImGuiMouseButton_Right
    
-    if (glut_button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
-        if (firstMouse)
-        {
-            lastX = io.MousePos.x;
-            lastY = io.MousePos.y;
-            firstMouse = false;
-        }
+    if (ImGui::IsMouseDragging(io.MouseDown[1])) {
+        float xoffset = io.MousePos.x - io.MouseClickedPos[1].x;
+        float yoffset = io.MouseClickedPos[1].y - io.MousePos.y;
+    
+        //if (firstMouse)
+        //{
+        //    lastX = io.MouseClickedPos[1].x;
+        //    lastY = io.MouseClickedPos[1].y;
+        //    firstMouse = false;
+        //}
 
-        float xoffset = io.MousePos.x - lastX;
-        float yoffset = lastY - io.MousePos.y; // reversed since y-coordinates go from bottom to top
-        lastX = io.MousePos.x;
-        lastY = io.MousePos.y;
-        
+        //float xoffset = io.MousePos.x - io.MouseClickedPos[1].x;
+        //float yoffset = io.MouseClickedPos[1].y - io.MousePos.y; // reversed since y-coordinates go from bottom to top
+        ////lastX = io.MouseClickedPos[1].x;
+        ////lastY = io.MouseClickedPos[1].y;
+        //
         float sensitivity = 0.05f; // change this value to your liking
         xoffset *= sensitivity;
         yoffset *= sensitivity;
 
-        yaw += xoffset;
-        pitch += yoffset;
+     /*   yaw += xoffset;
+        pitch += yoffset;*/
 
         // make sure that when pitch is out of bounds, screen doesn't get flipped
-        if (pitch > 89.0f)
+ /*       if (pitch > 89.0f)
             pitch = 89.0f;
         if (pitch < -89.0f)
             pitch = -89.0f;
@@ -254,8 +257,16 @@ void ImGui_ImplGLUT_MouseFunc(int glut_button, int state, int x, int y)
         front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
         front.y = sin(glm::radians(pitch));
         front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-        cameraFront = glm::normalize(front);
+        cameraFront = glm::normalize(front);*/
+     /*   glm::vec3 front;
+        front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        front.y = sin(glm::radians(pitch));
+        front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        cameraPos = glm::normalize(front);*/
+        cameraPos.x += xoffset;
+        cameraPos.y += yoffset;
     }
+
     glutPostRedisplay();
 }
 
@@ -285,6 +296,6 @@ void ImGui_ImplGLUT_MotionFunc(int x, int y)
 }
 
 void myLookAt() {
-    glm::vec3 cameraTarget = cameraPos + cameraFront;
+    glm::vec3 cameraTarget = cameraFront;
     gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z, cameraTarget.x, cameraTarget.y, cameraTarget.z, cameraUp.x, cameraUp.y, cameraUp.z);
 }

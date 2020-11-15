@@ -426,16 +426,21 @@ namespace objl
 			scale.X = 1.0;
 			scale.Y = 1.0;
 			scale.Z = 1.0;
+
+			counter = 0;
 		}
 		~Loader()
 		{
 			LoadedMeshes.clear();
 		}
 
+		std::string objectName;
+		int counter;
 		Vector3 rotate;
 		Vector3 translate;
 		Vector3 scale;
-
+		//box = 1, sphere = 0, rect, box1, sphere1
+		//
 		// Load a file into the loader
 		//
 		// If file is loaded return true
@@ -448,7 +453,7 @@ namespace objl
 			if (Path.substr(Path.size() - 4, 4) != ".obj")
 				return false;
 
-
+			//objectName = Path;
 			std::ifstream file(Path);
 
 			if (!file.is_open())

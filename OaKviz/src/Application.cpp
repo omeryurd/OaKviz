@@ -16,6 +16,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
+#include <string>
 #include "Application.h"
 #include <GL/glew.h>
 #ifdef __APPLE__
@@ -28,8 +29,6 @@
 #ifdef _MSC_VER
 #pragma warning (disable: 4505) // unreferenced local function has been removed
 #endif
-
-
 
 //void mouse_callback_func(int button, int state, int x, int y);
 // Our state
@@ -80,28 +79,7 @@ int main(int argc, char** argv)
     //loadObj(pathName);
     // Create GLUT windows
     init_window(argc, argv);
-
- 
-
-    glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-    glShadeModel(GL_SMOOTH);
-    //glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient_light);
-    
-    glMatrixMode(GL_MODELVIEW); 
-    glLoadIdentity();
-    glEnable(GL_RESCALE_NORMAL);
-    glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light);
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-    glEnable(GL_LIGHT0);
-
-    glEnable(GL_LIGHTING);
-    glEnable(GL_DEPTH_TEST);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(45, (16.0/9.0), 0.1, 20);
-    //gluLookAt(0, 0.0 ,5, 0, 0, 0, 0, 1, 0);
-    //glFrustum(-5.0, 5.0, -5.0, 5.0, 0.1, 5.0);
+    init_other();
     glutDisplayFunc(glut_display_func);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -147,10 +125,17 @@ int main(int argc, char** argv)
     //IM_ASSERT(font != NULL);
     glutMainLoop();
 
+    
+
     // Cleanup
     ImGui_ImplOpenGL2_Shutdown();
     ImGui_ImplGLUT_Shutdown();
     ImGui::DestroyContext();
+
+    //Heap Cleanup
+    for(int i = 0; i < loadedObjs.size(); i++) {
+        delete loadedObjs[i];
+    }
 
     return 0;
 }
@@ -159,7 +144,6 @@ int main(int argc, char** argv)
 //Window Initializatioon
 void init_window(int argc, char** argv) {
     glutInit(&argc, argv);
-       glutInit(&argc, argv);
 #ifdef __FREEGLUT_EXT_H__
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 #endif
@@ -171,6 +155,30 @@ void init_window(int argc, char** argv) {
 void normalizeCoordinates() {
     //Normalize Vertices
     
+}
+
+void init_other() {
+
+    glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+    glShadeModel(GL_SMOOTH);
+    //glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient_light);
+    
+    glMatrixMode(GL_MODELVIEW); 
+    glLoadIdentity();
+    glEnable(GL_RESCALE_NORMAL);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+    glEnable(GL_LIGHT0);
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45, (16.0/9.0), 0.1, 20);
+    //gluLookAt(0, 0.0 ,5, 0, 0, 0, 0, 1, 0);
+    //glFrustum(-5.0, 5.0, -5.0, 5.0, 0.1, 5.0);
+
 }
 
 void showMainMenu()
@@ -263,9 +271,60 @@ void glut_keyboard_func(unsigned char c, int x, int y) {
 
 void my_display_code()
 {
+    int selectedIndex = 0;
+    ImGui::Begin("New Window!");
+    static int selected = 0;
+    for (int n = 0; n < loadedObjs.size(); n++)
+    {
+        char buf[32];
+        sprintf(buf, "Object %d", n);
+        if (ImGui::Selectable(loadedObjs[n]->objectName.c_str(),selected == n)) {
+            selected = n;
+            selectedIndex = n;
+        }
+            
+    }
+    //if(selectedIndex != 0)
+   
+    if(!loadedObjs.empty()) {
+        ImGui::Text("Rotation:");
+       // std::string xRot = "Rotation X";
+       // //xRot.append(std::to_string(selected));
+       // std::string yRot = "Rotation Y";
+       //// yRot.append(std::to_string(selected));
+       // std::string zRot = "Rotation Z";
+       // //zRot.append(std::to_string(selected));
+             
+        ImGui::SliderFloat("Rotation X", &loadedObjs[selected]->rotate.X, -180.0f, 180.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+        ImGui::SliderFloat("Rotation Y", &loadedObjs[selected]->rotate.Y, -180.0f, 180.0f);
+        ImGui::SliderFloat("Rotation Z", &loadedObjs[selected]->rotate.Z, -180.0f, 180.0f);
+
+        ImGui::Text("Scale:");
+     
+        ImGui::DragFloat("Scale X", &loadedObjs[selected]->scale.X, 0.02f, 0.0f, FLT_MAX, "%.04f");
+        ImGui::DragFloat("Scale Y", &loadedObjs[selected]->scale.Y, 0.02f, 0.0f, FLT_MAX, "%.04f");
+        ImGui::DragFloat("Scale Z", &loadedObjs[selected]->scale.Z, 0.02f, 0.0f, FLT_MAX, "%.04f");
+
+        ImGui::Text("Translate:");
+        //std::string xRot = "X";
+        ////xRot.append(std::to_string(selected));
+        //std::string yRot = "Y";
+        //// yRot.append(std::to_string(selected));
+        //std::string zRot = "Z";
+        ////zRot.append(std::to_string(selected));
+     
+        ImGui::SliderFloat("Translate X", &loadedObjs[selected]->translate.X, -180.0f, 180.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+        ImGui::SliderFloat("Translate Y", &loadedObjs[selected]->translate.Y, -180.0f, 180.0f);
+        ImGui::SliderFloat("Translate Z", &loadedObjs[selected]->translate.Z, -180.0f, 180.0f);
+    }
+
+    ImGui::End();
+
     // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
     if (show_demo_window)
         ImGui::ShowDemoWindow(&show_demo_window);
+
+
 
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
@@ -279,12 +338,6 @@ void my_display_code()
         ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
         ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
         ImGui::Checkbox("Another Window", &show_another_window);
-        for (int l = 0; l < loadedObjs.size(); l++) {
-            ImGui::Text("Rotation");
-            ImGui::SliderFloat("X:", &loadedObjs[l]->rotate.X, -180.0f, 180.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::SliderFloat("Y:", &loadedObjs[l]->rotate.Y, -180.0f, 180.0f);
-            ImGui::SliderFloat("Z:", &loadedObjs[l]->rotate.Z, -180.0f, 180.0f);
-        }
         ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
         ImGui::ColorEdit3("disffuse color", (float*)&clear_color2);
         if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
@@ -323,46 +376,13 @@ void glut_display_func()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     myLookAt();
-    glRotatef(angleM, mRotate.X, mRotate.Y, mRotate.Z);
-    glTranslatef(mTranslate.X, mTranslate.Y, mTranslate.Z);
 
     int k = 0;
     float clearCol[] = {clear_color.x, clear_color.y, clear_color.z};
     float clearCol2[] = { clear_color2.x, clear_color2.y, clear_color2.z};
-    //for(int l = 0; l< loadedObjs.size(); l++)
-    //for(int i = 0; i < Loader.LoadedMeshes.size(); i++) {
-    //    objl::Mesh currentMesh = Loader.LoadedMeshes[i];
-    //    
-
-    //    for(int j = 0, ct = 0; j < currentMesh.Indices.size(); j += 3) {
-    //        
-    //       if(j % 6 == 0 && j != 0) {
-    //              ct+=3;
-    //       }
-
-    //        glBegin(GL_TRIANGLES);
-    //        //glNormal3i(currentMesh.Vertices[i].Normal.X, currentMesh.Vertices[i].Normal.Y, Loader.LoadedVertices[i].Normal.Z);
-    //        //std::cout << currentMesh.Indices[0] << " " << currentMesh.Vertices[i].Position.Y << " " << currentMesh.Vertices[i].Position.Z << std::endl;
-    //        glMaterialfv(GL_FRONT, GL_AMBIENT, clearCol);
-    //        glMaterialfv(GL_FRONT, GL_DIFFUSE, clearCol2);
-    //        
-    //        glNormal3f(currentMesh.Vertices[currentMesh.Indices[j]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Z);
-    //        glVertex3f(currentMesh.Vertices[currentMesh.Indices[j]].Position.X, currentMesh.Vertices[currentMesh.Indices[j]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j]].Position.Z);
-
-    //        glNormal3f(currentMesh.Vertices[currentMesh.Indices[j+1]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j+1]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j+1]].Normal.Z);
-    //        glVertex3f(currentMesh.Vertices[currentMesh.Indices[j+1]].Position.X, currentMesh.Vertices[currentMesh.Indices[j+1]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j+1]].Position.Z);
-
-    //        glNormal3f(currentMesh.Vertices[currentMesh.Indices[j+2]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j+2]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j+2]].Normal.Z);
-    //        glVertex3f(currentMesh.Vertices[currentMesh.Indices[j+2]].Position.X, currentMesh.Vertices[currentMesh.Indices[j+2]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j+2]].Position.Z);
-
-    //        glEnd();
-
-    //        
-    //    }
-    //     
-   
-    //}
+ 
     for (int l = 0; l < loadedObjs.size(); l++){
+        glPushMatrix();
         glTranslatef(loadedObjs[l]->translate.X, loadedObjs[l]->translate.Y, loadedObjs[l]->translate.Z);
         //glTranslatef(xCoord, yCoord, zCoord);
         glRotatef(loadedObjs[l]->rotate.X, 1.0, 0.0, 0.0);
@@ -400,6 +420,7 @@ void glut_display_func()
             }
 
         }
+        glPopMatrix();
     }
 
     ImGui_ImplOpenGL2_NewFrame();
@@ -419,12 +440,54 @@ void glut_display_func()
 }
 
 
-void addToScene(std::vector<objl::Loader*> &loadedObjs, const char* path) {
-    loadedObjs.push_back(loadObject(path));
+void addToScene(std::vector<objl::Loader*>& loadedObjs, const char* path) {
+    std::string tempString(path);
+
+    //int counter = 0;
+    //bool objNameFound = true;
+    //while (objNameFound) {
+    //    for (int i = 0; i < loadedObjs.size(); i++) {
+
+    //        if (!loadedObjs[i]->objectName.compare(path)) {
+    //            if (counter != 0) {
+    //                tempString.append(std::to_string(counter));
+    //                counter++;
+    //            }
+    //        }
+    //        else {
+    //            objNameFound = false;
+    //        }
+
+    //    }
+    //}
+    
+    // int counter = 0; 
+    /*
+        for(int . ...) {
+            if(load...compare(path)) {
+                loadedObjs->counter+=1
+
+            }
+        }
+    */
+
+  /*  if(counter!=0) {
+        tempString.append(std::to_string(counter));
+    }*/
+    for(int i = 0; i < loadedObjs.size(); i++) {
+        if(!loadedObjs[i]->objectName.compare(path)) {
+            loadedObjs[i]->counter+=1;
+            tempString.append(std::to_string(loadedObjs[i]->counter));
+        }
+    }
+
+    loadedObjs.push_back(loadObject(path, tempString));
+   
 }
 
-objl::Loader* loadObject(const char* path) {
+objl::Loader* loadObject(const char* path, std::string objectName) {
     objl::Loader* loader = new objl::Loader();
+    loader->objectName = objectName;
     if(!loader) {
         perror("Unable to Allocate Space in the Heap\n");
         return NULL;
