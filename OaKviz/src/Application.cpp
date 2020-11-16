@@ -18,6 +18,9 @@
 #include <stdio.h>
 #include <string>
 #include "Application.h"
+
+
+
 #include <GL/glew.h>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -29,6 +32,7 @@
 #ifdef _MSC_VER
 #pragma warning (disable: 4505) // unreferenced local function has been removed
 #endif
+#define FREEGLUT
 
 //void mouse_callback_func(int button, int state, int x, int y);
 // Our state
@@ -50,21 +54,6 @@ static float xCoord = 0.0f;
 static float yCoord = 0.0f;
 static float zCoord = 0.0f;
 
-//// camera
-//glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-//glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-//glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-//
-//bool firstMouse = true;
-//float yaw = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
-//float pitch = 0.0f;
-//float lastX = 800.0f / 2.0;
-//float lastY = 600.0 / 2.0;
-//float fov = 45.0f;
-//
-//// timing
-//float deltaTime = 0.0f;	// time between current frame and last frame
-//float lastFrame = 0.0f;
 
 
 // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
@@ -175,7 +164,7 @@ void init_other() {
     glEnable(GL_DEPTH_TEST);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45, (16.0/9.0), 0.1, 20);
+    gluPerspective(45, (16.0/9.0), 0.1, 150);
     //gluLookAt(0, 0.0 ,5, 0, 0, 0, 0, 1, 0);
     //glFrustum(-5.0, 5.0, -5.0, 5.0, 0.1, 5.0);
 
@@ -360,6 +349,8 @@ void my_display_code()
             show_another_window = false;
         ImGui::End();
     }
+
+    
    
     
 }
@@ -376,6 +367,55 @@ void glut_display_func()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     myLookAt();
+    //Grid -------
+    GLfloat grid2x2[2][2][3] = {
+  {{-2.0, -2.0, 0.0}, {4.0, -2.0, 0.0}},
+  {{-2.0, 3.0, 0.0}, {3.0, 4.0, 0.0}}
+    };
+    GLfloat grid4x4[4][4][3] =
+    {
+      {
+        {-2.0, -2.0, 0.0},
+        {-0.5, -2.0, 0.0},
+        {0.5, -2.0, 0.0},
+        {2.0, -2.0, 0.0}},
+      {
+        {-2.0, -0.5, 0.0},
+        {-0.5, -0.5, 0.0},
+        {0.5, -0.5, 0.0},
+        {2.0, -0.5, 0.0}},
+      {
+        {-2.0, 0.5, 0.0},
+        {-0.5, 0.5, 0.0},
+        {0.5, 0.5, 0.0},
+        {2.0, 0.5, 0.0}},
+      {
+        {-2.0, 2.0, 0.0},
+        {-0.5, 2.0, 0.0},
+        {0.5, 2.0, 0.0},
+        {2.0, 2.0, 0.0}}
+    };
+    GLfloat* grid = &grid4x4[0][0][0];
+    float clearCol3[] = { 0, 0, 0 };
+    glMaterialfv(GL_FRONT, GL_AMBIENT, clearCol3);
+    glPushMatrix();
+    glRotatef(90, 1, 0, 0);
+   
+    glEnable(GL_MAP2_VERTEX_3);
+
+
+    int uSize = 4;
+    int vSize = 4;
+    int gridSize = 20;
+  
+    glMapGrid2f(gridSize, 0.0, 1.0, gridSize, 0.0, 1.0);
+    glMap2f(GL_MAP2_VERTEX_3, 0, 1, 3, uSize, 0, 1, uSize * 3, vSize, grid);
+    glEvalMesh2(GL_LINE, 0, gridSize, 0, gridSize);
+
+    glPopMatrix();
+
+
+    // Grid ends-----
 
     int k = 0;
     float clearCol[] = {clear_color.x, clear_color.y, clear_color.z};

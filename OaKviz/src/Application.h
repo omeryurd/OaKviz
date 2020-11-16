@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <vector>
 #include "OBJLoader/OBJ_Loader.h"
-
 void init_window(int argc, char** argv);
 void init_other();
 void showMainMenu();

@@ -932,6 +932,9 @@
     <ClInclude Include="src\Application.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\external\glm\detail\func_common.inl">

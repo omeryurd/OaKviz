@@ -31,6 +31,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Application.h" />
+    <ClInclude Include="src\core\Camera.h" />
     <ClInclude Include="src\core\Mesh.h" />
     <ClInclude Include="src\external\FileBrowser\Dirent\dirent.h" />
     <ClInclude Include="src\external\FileBrowser\ImGuiFileBrowser.h" />

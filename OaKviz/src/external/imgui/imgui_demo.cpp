@@ -1584,6 +1584,7 @@ static void ShowDemoWindowWidgets()
         ImGui::DragFloat("DragFloat (-inf -> +inf)", &drag_f, 0.005f, -FLT_MAX, +FLT_MAX, "%.3f", flags);
         ImGui::DragInt("DragInt (0 -> 100)", &drag_i, 0.5f, 0, 100, "%d", flags);
 
+
         // Sliders
         static float slider_f = 0.5f;
         static int slider_i = 50;

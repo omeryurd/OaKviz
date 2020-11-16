@@ -28,6 +28,7 @@
 
 
 
+
 #include <stdio.h>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -76,6 +77,7 @@ bool ImGui_ImplGLUT_Init()
     io.KeyMap[ImGuiKey_X]           = 'X';
     io.KeyMap[ImGuiKey_Y]           = 'Y';
     io.KeyMap[ImGuiKey_Z]           = 'Z';
+   
 
     return true;
 }
@@ -140,20 +142,8 @@ void ImGui_ImplGLUT_KeyboardFunc(unsigned char c, int x, int y)
         io.KeysDown[c] = io.KeysDown[c - 'A' + 'a'] = true;
     else
         io.KeysDown[c] = true;
-    int current_time = glutGet(GLUT_ELAPSED_TIME);
-    int delta_time_ms = (current_time - g_Time);
-    if (delta_time_ms <= 0)
-        delta_time_ms = 1;
-    io.DeltaTime = delta_time_ms / 1000.0f;
-    float cameraSpeed = 50.0* io.DeltaTime;
-    if (c == 'W')
-        cameraPos += cameraSpeed * cameraFront;
-    if (c == 'S')
-        cameraPos -= cameraSpeed * cameraFront;
-    if (c == 'A')
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    if (c == 'D')
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    
+
     glutPostRedisplay();
     ImGui_ImplGLUT_UpdateKeyboardMods();
     (void)x; (void)y; // Unused
@@ -223,50 +213,53 @@ void ImGui_ImplGLUT_MouseFunc(int glut_button, int state, int x, int y)
         io.MouseDown[button] = false;
     //ImGui::IsMouseDragging(io.MouseDown[1]);
     //ImGui::IsMouseDragging(ImGuiMouseButton_::ImGuiMouseButton_Right
-   
-    if (ImGui::IsMouseDragging(io.MouseDown[1])) {
-        float xoffset = io.MousePos.x - io.MouseClickedPos[1].x;
-        float yoffset = io.MouseClickedPos[1].y - io.MousePos.y;
-    
-        //if (firstMouse)
-        //{
-        //    lastX = io.MouseClickedPos[1].x;
-        //    lastY = io.MouseClickedPos[1].y;
-        //    firstMouse = false;
-        //}
+    if (io.MouseDown[1]) {
+        arcball_on = true;
+        //glm::vec4 position(m_camera.GetEye().x, m_camera.GetEye().y, m_camera.GetEye().z, 1);
+        //glm::vec4 pivot(m_camera.GetLookAt().x, m_camera.GetLookAt().y, m_camera.GetLookAt().z, 1);
 
-        //float xoffset = io.MousePos.x - io.MouseClickedPos[1].x;
-        //float yoffset = io.MouseClickedPos[1].y - io.MousePos.y; // reversed since y-coordinates go from bottom to top
-        ////lastX = io.MouseClickedPos[1].x;
-        ////lastY = io.MouseClickedPos[1].y;
-        //
-        float sensitivity = 0.05f; // change this value to your liking
-        xoffset *= sensitivity;
-        yoffset *= sensitivity;
+        //// step 1 : Calculate the amount of rotation given the mouse movement.
+        //float deltaAngleX = (2 * M_PI / io.DisplaySize.x); // a movement from left to right = 2*PI = 360 deg
+        //float deltaAngleY = (M_PI / io.DisplaySize.y);  // a movement from top to bottom = PI = 180 deg
+        //float xAngle = (io.MouseClickedPos[1].x - io.MousePos.x) * deltaAngleX;
+        //float yAngle = (io.MouseClickedPos[1].y - io.MousePos.y) * deltaAngleY;
 
-     /*   yaw += xoffset;
-        pitch += yoffset;*/
+        //// Extra step to handle the problem when the camera direction is the same as the up vector
+        //float cosAngle = glm::dot(m_camera.GetViewDir(), m_upVector);
+        ///*if (cosAngle * sgn(yDeltaAngle) > 0.99f)
+        //    yDeltaAngle = 0;*/
 
-        // make sure that when pitch is out of bounds, screen doesn't get flipped
- /*       if (pitch > 89.0f)
-            pitch = 89.0f;
-        if (pitch < -89.0f)
-            pitch = -89.0f;
+        //// step 2: Rotate the camera around the pivot point on the first axis.
+        //glm::mat4x4 rotationMatrixX(1.0f);
+        //rotationMatrixX = glm::rotate(rotationMatrixX, xAngle, m_upVector);
+        //position = (rotationMatrixX * (position - pivot)) + pivot;
 
-        glm::vec3 front;
-        front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        front.y = sin(glm::radians(pitch));
-        front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-        cameraFront = glm::normalize(front);*/
-     /*   glm::vec3 front;
-        front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        front.y = sin(glm::radians(pitch));
-        front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-        cameraPos = glm::normalize(front);*/
-        cameraPos.x += xoffset;
-        cameraPos.y += yoffset;
+        //// step 3: Rotate the camera around the pivot point on the second axis.
+        //glm::mat4x4 rotationMatrixY(1.0f);
+        //rotationMatrixY = glm::rotate(rotationMatrixY, yAngle, m_camera.GetRightVector());
+        //glm::vec3 finalPosition = (rotationMatrixY * (position - pivot)) + pivot;
+        //m_camera.SetCameraView(finalPosition, m_camera.GetLookAt(), m_upVector);
+
+        // Update the mouse position for the next rotation
+        //m_lastMousePosX = io.MouseClickedPos[1].x;
+        //m_lastMousePosY = io.MouseClickedPos[1].y;
     }
+    else {
+        arcball_on = false;
+    }
+    if (io.MouseDown[2]) {
+        pan_on = true;
+        pan_x = x;
+        pan_y = y;
+    }
+    else {
+        pan_on = false;
+    }
+    m_lastMousePosX = io.MousePos.x;
+    m_lastMousePosY = io.MousePos.y;
 
+  
+  
     glutPostRedisplay();
 }
 
@@ -293,9 +286,55 @@ void ImGui_ImplGLUT_MotionFunc(int x, int y)
 {
     ImGuiIO& io = ImGui::GetIO();
     io.MousePos = ImVec2((float)x, (float)y);
+    if (arcball_on) {  // if left button is pressed
+        glm::vec4 position(m_camera.GetEye().x, m_camera.GetEye().y, m_camera.GetEye().z, 1);
+        glm::vec4 pivot(m_camera.GetLookAt().x, m_camera.GetLookAt().y, m_camera.GetLookAt().z, 1);
+
+        // step 1 : Calculate the amount of rotation given the mouse movement.
+        float deltaAngleX = (2 * M_PI / io.DisplaySize.x); // a movement from left to right = 2*PI = 360 deg
+        float deltaAngleY = (M_PI / io.DisplaySize.y);  // a movement from top to bottom = PI = 180 deg
+        float xAngle = (m_lastMousePosX - io.MousePos.x) * deltaAngleX;
+        float yAngle = (m_lastMousePosY - io.MousePos.y) * deltaAngleY;
+
+   
+        // Extra step to handle the problem when the camera direction is the same as the up vector
+        float cosAngle = glm::dot(m_camera.GetViewDir(), m_upVector);
+        if (cosAngle * ((deltaAngleY > 0) ? 1 : ((deltaAngleY < 0) ? -1 : 0)) > 0.99f)
+            deltaAngleY = 0;
+   
+        
+
+            // step 2: Rotate the camera around the pivot point on the first axis.
+        glm::mat4x4 rotationMatrixX(1.0f);
+        rotationMatrixX = glm::rotate(rotationMatrixX, xAngle, m_upVector);
+        position = (rotationMatrixX * (position - pivot)) + pivot;
+
+        // step 3: Rotate the camera around the pivot point on the second axis.
+        glm::mat4x4 rotationMatrixY(1.0f);
+        rotationMatrixY = glm::rotate(rotationMatrixY, yAngle, m_camera.GetRightVector());
+        glm::vec3 finalPosition = (rotationMatrixY * (position - pivot)) + pivot;
+        m_camera.SetCameraView(finalPosition, m_camera.GetLookAt(), m_upVector);
+        m_lastMousePosX = io.MousePos.x;
+        m_lastMousePosY = io.MousePos.y;
+        io.MouseClickedPos[2];
+    }
+
+    if (pan_on) {
+        glm::vec3 lookat(m_camera.GetLookAt().x + (double(x)-pan_x) / (io.DisplaySize.x*0.1), m_camera.GetLookAt().y + (double(y)-pan_y)/ (io.DisplaySize.y*0.1), m_camera.GetLookAt().z);
+        glm::vec3 eye(m_camera.GetEye().x + (double(x) - pan_x) / (io.DisplaySize.x * 0.1), m_camera.GetEye().y + (double(y) - pan_y) / (io.DisplaySize.y * 0.1), m_camera.GetEye().z);
+        m_camera.SetCameraView(eye, lookat, m_upVector);
+        pan_x = x;
+        pan_y = y;
+    }
+   
+
+
 }
 
 void myLookAt() {
     glm::vec3 cameraTarget = cameraFront;
-    gluLookAt(cameraPos.x, cameraPos.y, cameraPos.z, cameraTarget.x, cameraTarget.y, cameraTarget.z, cameraUp.x, cameraUp.y, cameraUp.z);
+    //gluLookAt(0.0f, 0.0f, 15.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f);
+
+    gluLookAt(m_camera.GetEye().x, m_camera.GetEye().y, m_camera.GetEye().z, m_camera.GetLookAt().x, m_camera.GetLookAt().y, m_camera.GetLookAt().z, m_camera.GetUpVector().x, m_camera.GetUpVector().y, m_camera.GetUpVector().z);
 }
+
