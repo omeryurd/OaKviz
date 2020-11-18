@@ -41,11 +41,13 @@ static bool show_another_window = false;
 static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 static ImVec4 clear_color2 = ImVec4(0.35f, 0.45f, 0.60f, 1.00f);
 objl::Loader Loader;
-GLfloat ambient_light[] = { 0.6, 0.6, 0.6, 1.0 };
-GLfloat diffuse_light[] = { 0.4, 0.4, 0.4, 1.0 };
+GLfloat global_light[] = { 0.5, 0.5, 0.5, 1.0 };
+GLfloat ambient_light[] = { 0.0, 0.0, 0.0, 1.0 };
+GLfloat diffuse_light[] = { 0.0, 0.0, 0.0, 1.0 };
+GLfloat specular_light[] = { 1.0, 0.0, 0.0, 1.0 };
 //GLfloat colors[] = { 0.2, 0.2, 0.2, 0.35, 0.35, 0.35,0.5, 0.5, 0.5, 0.65, 0.65, 0.65,0.8, 0.8, 0.8, 0.95, 0.95, 0.95 };
 GLfloat colors[] = { 1.0, 0.5, 0, 0.5, 0, 0,0.4, 0, 0, 0.2, 0, 0,.3, 0, 0, .7, 0, 0 };
-GLfloat light_position[] = { 0.5,0.5, 1.2 , 1.0};
+GLfloat light_position[] = { 0,0, -10 , 1.0};
 objl::Vector3 mRotate(0.0, 0.0, 0.0);
 objl::Vector3 mTranslate(0.0, 0.0, 0.0);
 float angleM = 0;
@@ -72,6 +74,7 @@ int main(int argc, char** argv)
     glutDisplayFunc(glut_display_func);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    addToScene(loadedObjs, "light.obj");
     glutDisplayFunc(glut_display_func);
     //glutKeyboardFunc(glut_keyboard_func);
     //glutMouseFunc(mouse_callback_func);
@@ -120,11 +123,13 @@ int main(int argc, char** argv)
     ImGui_ImplOpenGL2_Shutdown();
     ImGui_ImplGLUT_Shutdown();
     ImGui::DestroyContext();
-
+    
     //Heap Cleanup
     for(int i = 0; i < loadedObjs.size(); i++) {
         delete loadedObjs[i];
     }
+
+
 
     return 0;
 }
@@ -150,13 +155,14 @@ void init_other() {
 
     glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
     glShadeModel(GL_SMOOTH);
-    //glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient_light);
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_light);
     
     glMatrixMode(GL_MODELVIEW); 
     glLoadIdentity();
     glEnable(GL_RESCALE_NORMAL);
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, specular_light);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     glEnable(GL_LIGHT0);
 
@@ -293,7 +299,6 @@ void my_display_code()
         ImGui::DragFloat("Scale X", &loadedObjs[selected]->scale.X, 0.02f, 0.0f, FLT_MAX, "%.04f");
         ImGui::DragFloat("Scale Y", &loadedObjs[selected]->scale.Y, 0.02f, 0.0f, FLT_MAX, "%.04f");
         ImGui::DragFloat("Scale Z", &loadedObjs[selected]->scale.Z, 0.02f, 0.0f, FLT_MAX, "%.04f");
-
         ImGui::Text("Translate:");
         //std::string xRot = "X";
         ////xRot.append(std::to_string(selected));
@@ -350,7 +355,8 @@ void my_display_code()
         ImGui::End();
     }
 
-    
+   
+
    
     
 }
@@ -367,6 +373,32 @@ void glut_display_func()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     myLookAt();
+    glPushMatrix();
+   
+    glTranslatef(-light_position[0],- light_position[1], -light_position[2]);
+  
+    //glTranslatef(-10, 10, 5);
+   
+
+
+        objl::Mesh currentMesh = loadedObjs[0]->LoadedMeshes[0];
+
+        for (int j = 0, ct = 0; j < currentMesh.Indices.size(); j += 3) {
+           
+            glBegin(GL_LINE_LOOP);
+            glVertex3f(currentMesh.Vertices[currentMesh.Indices[j]].Position.X, currentMesh.Vertices[currentMesh.Indices[j]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j]].Position.Z);
+
+            
+            glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Z);
+
+           
+            glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Z);
+
+            glEnd();
+
+
+        }
+    glPopMatrix();
     //Grid -------
     GLfloat grid2x2[2][2][3] = {
   {{-2.0, -2.0, 0.0}, {4.0, -2.0, 0.0}},
@@ -402,7 +434,9 @@ void glut_display_func()
     glRotatef(90, 1, 0, 0);
    
     glEnable(GL_MAP2_VERTEX_3);
-
+    glEnable(GL_MAP2_COLOR_4);
+    glColor4f(0, 0, 0, 1);
+    glEnable(GL_AUTO_NORMAL);
 
     int uSize = 4;
     int vSize = 4;
@@ -413,7 +447,7 @@ void glut_display_func()
     glEvalMesh2(GL_LINE, 0, gridSize, 0, gridSize);
 
     glPopMatrix();
-
+   
 
     // Grid ends-----
 
@@ -421,7 +455,7 @@ void glut_display_func()
     float clearCol[] = {clear_color.x, clear_color.y, clear_color.z};
     float clearCol2[] = { clear_color2.x, clear_color2.y, clear_color2.z};
  
-    for (int l = 0; l < loadedObjs.size(); l++){
+    for (int l = 1; l < loadedObjs.size(); l++){
         glPushMatrix();
         glTranslatef(loadedObjs[l]->translate.X, loadedObjs[l]->translate.Y, loadedObjs[l]->translate.Z);
         //glTranslatef(xCoord, yCoord, zCoord);
@@ -442,8 +476,11 @@ void glut_display_func()
                 glBegin(GL_TRIANGLES);
                 //glNormal3i(currentMesh.Vertices[i].Normal.X, currentMesh.Vertices[i].Normal.Y, Loader.LoadedVertices[i].Normal.Z);
                 //std::cout << currentMesh.Indices[0] << " " << currentMesh.Vertices[i].Position.Y << " " << currentMesh.Vertices[i].Position.Z << std::endl;
-                glMaterialfv(GL_FRONT, GL_AMBIENT, clearCol);
-                glMaterialfv(GL_FRONT, GL_DIFFUSE, clearCol2);
+                
+                glMaterialfv(GL_FRONT, GL_AMBIENT, &currentMesh.MeshMaterial.Ka.X);
+                glMaterialfv(GL_FRONT, GL_DIFFUSE, &currentMesh.MeshMaterial.Kd.X);
+                glMaterialfv(GL_FRONT, GL_SPECULAR, &currentMesh.MeshMaterial.Ks.X);    
+                glMateriali(GL_FRONT, GL_SHININESS, currentMesh.MeshMaterial.Ns);    
 
                 glNormal3f(currentMesh.Vertices[currentMesh.Indices[j]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Z);
                 glVertex3f(currentMesh.Vertices[currentMesh.Indices[j]].Position.X, currentMesh.Vertices[currentMesh.Indices[j]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j]].Position.Z);
@@ -462,6 +499,10 @@ void glut_display_func()
         }
         glPopMatrix();
     }
+
+
+
+
 
     ImGui_ImplOpenGL2_NewFrame();
     ImGui_ImplGLUT_NewFrame();
@@ -620,4 +661,3 @@ void loadObj(const char * path) {
         file.close();
     }
 }
-

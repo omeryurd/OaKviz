@@ -41,6 +41,8 @@
 #endif
 
 static int g_Time = 0;          // Current time, in milliseconds
+float diffx = 0;
+float diffy = 0;
 
 bool ImGui_ImplGLUT_Init()
 {
@@ -142,6 +144,13 @@ void ImGui_ImplGLUT_KeyboardFunc(unsigned char c, int x, int y)
         io.KeysDown[c] = io.KeysDown[c - 'A' + 'a'] = true;
     else
         io.KeysDown[c] = true;
+    glm::vec3 view = glm::normalize(m_camera.GetViewDir());
+    if (c == 'w') {
+        m_camera.SetCameraView(m_camera.GetEye() + view, m_camera.GetLookAt(), m_camera.GetUpVector());
+    }
+    if (c == 's') {
+        m_camera.SetCameraView(m_camera.GetEye() - view, m_camera.GetLookAt(), m_camera.GetUpVector());
+    }
     
 
     glutPostRedisplay();
@@ -315,20 +324,86 @@ void ImGui_ImplGLUT_MotionFunc(int x, int y)
         glm::vec3 finalPosition = (rotationMatrixY * (position - pivot)) + pivot;
         m_camera.SetCameraView(finalPosition, m_camera.GetLookAt(), m_upVector);
         m_lastMousePosX = io.MousePos.x;
-        m_lastMousePosY = io.MousePos.y;
+        m_lastMousePosY = io.MousePos.y; 
         io.MouseClickedPos[2];
+        //printf("upVec x:%f, y:%f, z:%f\n", m_upVector.x, m_upVector.y, m_upVector.z);
     }
 
     if (pan_on) {
-        glm::vec3 lookat(m_camera.GetLookAt().x + (double(x)-pan_x) / (io.DisplaySize.x*0.1), m_camera.GetLookAt().y + (double(y)-pan_y)/ (io.DisplaySize.y*0.1), m_camera.GetLookAt().z);
-        glm::vec3 eye(m_camera.GetEye().x + (double(x) - pan_x) / (io.DisplaySize.x * 0.1), m_camera.GetEye().y + (double(y) - pan_y) / (io.DisplaySize.y * 0.1), m_camera.GetEye().z);
-        m_camera.SetCameraView(eye, lookat, m_upVector);
-        pan_x = x;
-        pan_y = y;
+        const float cameraSpeed = 0.1f;
+        glm::vec3 targetToEye;
+        glm::vec3 finalLookx;
+        glm::vec3 finalLooky;
+        glm::vec3 upVec(1, 0, 0);
+        glm::vec3 finalLook;
+        //printf("cx :%f\n", io.MouseClickedPos[2].x);
+        //printf("cy: %f\n", io.MouseClickedPos[2].y);
+        //printf("dx1 :%f dx2: %f\n", diffx1, diffx2);
+        //printf("x :%f\n", io.MousePos.x);
+        targetToEye = m_camera.GetEye() - m_camera.GetLookAt();
+        targetToEye = glm::normalize(targetToEye);
+        
+        if (io.KeyShift) {
+            if ((io.MouseClickedPos[2].x - io.MousePos.x) <= 0) { //Moving Left
+                if (diffx < io.MousePos.x) {
+                    finalLookx = (glm::cross(targetToEye, -m_camera.GetUpVector())) * cameraSpeed;
+                    //printf("upVec x:%f, y:%f, z:%f\n", m_camera.GetUpVector().x, m_camera.GetUpVector().y, m_camera.GetUpVector().z);
+                }
+                else {
+                    finalLookx = (glm::cross(targetToEye, m_camera.GetUpVector())) * cameraSpeed;
+                }
+            }
+            else if ((io.MouseClickedPos[2].x - io.MousePos.x) > 0) {   //Moving right
+                if (diffx < io.MousePos.x) {
+                    finalLookx = (glm::cross(targetToEye, -m_camera.GetUpVector())) * cameraSpeed;
+                }
+                else {
+                    finalLookx = (glm::cross(targetToEye, m_camera.GetUpVector())) * cameraSpeed;
+                }
+
+            }
+            /*printf("tar x:%f, y:%f, z:%f\n", targetToEye.x, targetToEye.y, targetToEye.z);
+            printf("up x:%f, y:%f, z:%f\n", m_camera.GetUpVector().x, m_camera.GetUpVector().y, m_camera.GetUpVector().z);
+            printf("final x:%f, y:%f, z:%f\n", finalLookx.x, finalLookx.y, finalLookx.z);*/
+            m_camera.SetCameraView(m_camera.GetEye() - finalLookx, m_camera.GetLookAt() - finalLookx, m_upVector);
+        }
+        glm::vec3 right = glm::normalize(m_camera.GetRightVector());
+        if (io.KeyCtrl) {
+            if ((io.MouseClickedPos[2].y - io.MousePos.y) <= 0) { //Down
+                if (diffy < io.MousePos.y) {
+                   //upVec.x = 1;
+                    finalLooky = (glm::cross(targetToEye, -right)) * cameraSpeed;
+
+                }
+                else {
+                    //upVec.x = -1;
+                    finalLooky = (glm::cross(targetToEye, right)) * cameraSpeed;
+
+                }
+
+            }
+            else if ((io.MouseClickedPos[2].y - io.MousePos.y) > 0) {
+                if (diffy < io.MousePos.y) {
+                    //upVec.x = 1;
+                    finalLooky = (glm::cross(targetToEye, -right)) * cameraSpeed;
+
+                }
+                else {
+                    //upVec.x = -1;
+                    finalLooky = (glm::cross(targetToEye, right)) * cameraSpeed;
+                }
+                
+            }
+
+            glm::vec3 eye(m_camera.GetEye().x - finalLooky.x, m_camera.GetEye().y - finalLooky.y, m_camera.GetEye().z - finalLooky.z);
+            glm::vec3 look(m_camera.GetLookAt().x - finalLooky.x, m_camera.GetLookAt().y - finalLooky.y, m_camera.GetLookAt().z - finalLooky.z);
+            m_camera.SetCameraView(eye, look, m_upVector);
+        }
+     
     }
    
-
-
+    diffx = io.MousePos.x;
+    diffy = io.MousePos.y;
 }
 
 void myLookAt() {
