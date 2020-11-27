@@ -340,7 +340,6 @@ void ImGui_ImplGLUT_MotionFunc(int x, int y)
         else {
             cameraSpeed = io.DeltaTime * 20;
         }
-        printf("d: %f\n", io.DeltaTime);
         glm::vec3 targetToEye;
         glm::vec3 finalLookx;
         glm::vec3 finalLooky;

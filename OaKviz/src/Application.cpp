@@ -17,6 +17,8 @@
 #include "glm/gtc/quaternion.hpp"
 #include "glm/gtx/quaternion.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb/stb_image.h"
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
@@ -40,12 +42,13 @@
 
 //void mouse_callback_func(int button, int state, int x, int y);
 // Our state
+extern "C" bool loadTexture(std::string path);
 static bool show_demo_window = true;
 static bool show_another_window = false;
 static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 static ImVec4 clear_color2 = ImVec4(0.35f, 0.45f, 0.60f, 1.00f);
 objl::Loader Loader;
-GLfloat global_light[] = { 0.5, 0.5, 0.5, 1.0 };
+GLfloat global_light[] = { 0.7, 0.7, 0.7, 1.0 };
 GLfloat ambient_light[] = { 0.6, 0.6, 0.6, 1.0 };
 GLfloat diffuse_light[] = { 0.6, 0.6, 0.6, 1.0 };
 GLfloat specular_light[] = { 0.2, 0.2, 0.2, 1.0 };
@@ -59,6 +62,9 @@ std::vector<objl::Loader*> loadedObjs;
 static float xCoord = 0.0f;
 static float yCoord = 0.0f;
 static float zCoord = 0.0f;
+GLuint* textureIds;
+bool hasTexture = false;
+static int selected = 0;
 
 
 
@@ -156,17 +162,19 @@ void normalizeCoordinates() {
 }
 
 void init_other() {
-
+   /* if(hasTexture)
+    loadTexture("Cottage_Dirt_Base_Color.png");*/
     glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
     glShadeModel(GL_SMOOTH);
-    //glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_light);
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_light);
     
     glMatrixMode(GL_MODELVIEW); 
     glLoadIdentity();
     glEnable(GL_RESCALE_NORMAL);
+    int i = 0;
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light);
-    //glLightfv(GL_LIGHT0, GL_SPECULAR, specular_light);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, specular_light);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     glEnable(GL_LIGHT0);
 
@@ -180,10 +188,58 @@ void init_other() {
 
 }
 
+bool loadTexture(std::string path) {
+    int x, y, n;
+    stbi_set_flip_vertically_on_load(true);
+    unsigned char* data = stbi_load(path.c_str(), &x, &y, &n, STBI_rgb);
+    unsigned int* texId;
+    texId = new unsigned int;
+    glGenTextures(static_cast<GLsizei>(1), texId);
+ 
+    if (data != nullptr )
+    {
+        // Convert every colour component into unsigned byte.If your image contains
+        // alpha channel you can replace IL_RGB with IL_RGBA
+        //success = ilConvertImage(IL_RGB, IL_UNSIGNED_BYTE);
+        /*if (!success)
+        {
+            abortGLInit("Couldn't convert image");
+            return -1;
+        }*/
+        // Binding of texture name
+        glBindTexture(GL_TEXTURE_2D, *texId);
+        // redefine standard texture values
+        // We will use linear interpolation for magnification filter
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // We will use linear interpolation for minifying filter
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        // Texture specification
+        glTexImage2D(GL_TEXTURE_2D, 0, n, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);// Texture specification.
+
+        // we also want to be able to deal with odd texture dimensions
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+        glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+        glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+        stbi_image_free(data);
+        //glDeleteTextures()
+        loadedObjs[selected]->hasTexture = true;
+        loadedObjs[selected]->texId = *texId;
+        glEnable(GL_TEXTURE_2D);
+    }
+    else
+    {
+        /* Error occurred */
+        printf("Can't open texture file!");
+        return false;
+    }
+}
+
 void showMainMenu()
 {
     static imgui_addons::ImGuiFileBrowser file_dialog;
     bool open = false, save = false;
+    bool tex = false;
     if (ImGui::BeginMainMenuBar())
     {
         if (ImGui::BeginMenu("Menu"))
@@ -192,6 +248,8 @@ void showMainMenu()
                 open = true;
             if (ImGui::MenuItem("Save", NULL))
                 save = true;
+            if (ImGui::MenuItem("Load Texture", NULL))
+                tex = true;
 
             ImGui::EndMenu();
         }
@@ -203,6 +261,8 @@ void showMainMenu()
         ImGui::OpenPopup("Open File");
     if (save)
         ImGui::OpenPopup("Save File");
+    if (tex)
+        ImGui::OpenPopup("Load Texture");
 
     /* Optional third parameter. Support opening only compressed rar/zip files.
      * Opening any other file will show error, return false and won't close the dialog.
@@ -213,6 +273,17 @@ void showMainMenu()
         const char* pathName = file_dialog.selected_fn.c_str();
 
         addToScene(loadedObjs, pathName);
+        //loadedObjs[selected]->hasTexture  = loadTexture("Cottage_Dirt_Base_Color.png", loadedObjs[selected]->texId);
+       
+        std::cout << file_dialog.selected_path << std::endl;    // The absolute path to the selected file
+    }
+    if (file_dialog.showFileDialog("Load Texture", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".jpg,.png,.7z"))
+    {
+        std::cout << file_dialog.selected_fn << std::endl;      // The name of the selected file or directory in case of Select Directory dialog mode
+        const char* pathName = file_dialog.selected_fn.c_str();
+
+        loadedObjs[selected]->hasTexture = loadTexture(pathName);
+
         std::cout << file_dialog.selected_path << std::endl;    // The absolute path to the selected file
     }
     if (file_dialog.showFileDialog("Save File", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700, 310), ".png,.jpg,.bmp"))
@@ -272,7 +343,7 @@ void my_display_code()
 {
     int selectedIndex = 0;
     ImGui::Begin("New Window!");
-    static int selected = 0;
+    
     for (int n = 0; n < loadedObjs.size(); n++)
     {
         char buf[32];
@@ -462,7 +533,7 @@ void glut_display_func()
     int k = 0;
     float clearCol[] = {clear_color.x, clear_color.y, clear_color.z};
     float clearCol2[] = { clear_color2.x, clear_color2.y, clear_color2.z};
- 
+       
     for (int l = 1; l < loadedObjs.size(); l++){
         glPushMatrix();
         glTranslatef(loadedObjs[l]->translate.X, loadedObjs[l]->translate.Y, loadedObjs[l]->translate.Z);
@@ -496,6 +567,16 @@ void glut_display_func()
         //glRotatef(loadedObjs[l]->rotate.Y, 0.0, 1.0, 0.0);
         glRotatef(loadedObjs[l]->rotate.Z, 0.0, 0.0, 1.0);
         glScalef(loadedObjs[l]->scale.X, loadedObjs[l]->scale.Y, loadedObjs[l]->scale.Z);
+        
+        if(loadedObjs[l]->hasTexture){
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, loadedObjs[l]->texId);
+        }
+        else {
+            glDisable(GL_TEXTURE_2D);
+        }
+
+            
         for (int i = 0; i < loadedObjs[l]->LoadedMeshes.size(); i++) {
             objl::Mesh currentMesh = loadedObjs[l]->LoadedMeshes[i];
 
@@ -511,19 +592,15 @@ void glut_display_func()
                 
                 glMaterialfv(GL_FRONT, GL_AMBIENT, &currentMesh.MeshMaterial.Ka.X);
                 glMaterialfv(GL_FRONT, GL_DIFFUSE, &currentMesh.MeshMaterial.Kd.X);
-                glMaterialfv(GL_FRONT, GL_SPECULAR, &currentMesh.MeshMaterial.Ks.X);    
-                glMateriali(GL_FRONT, GL_SHININESS, currentMesh.MeshMaterial.Ns);    
-                //std::cout << currentMesh.Vertices[currentMesh.Indices[j]].Normal.X << " " << currentMesh.Vertices[currentMesh.Indices[j]].Normal.Y << " " << currentMesh.Vertices[currentMesh.Indices[j]].Normal.Z << std::endl;
-                //std::cout << currentMesh.Vertices[currentMesh.Indices[j+1]].Normal.X << " " << currentMesh.Vertices[currentMesh.Indices[j+1]].Normal.Y << " " << currentMesh.Vertices[currentMesh.Indices[j+1]].Normal.Z << std::endl;
-                //std::cout << currentMesh.Vertices[currentMesh.Indices[j+2]].Normal.X << " " << currentMesh.Vertices[currentMesh.Indices[j+2]].Normal.Y << " " << currentMesh.Vertices[currentMesh.Indices[j+2]].Normal.Z << std::endl;
-                //std::cout << currentMesh.Vertices.size() << std::endl;
-                //std::cout << loadedObjs[l]->LoadedVertices.size() << std::endl;
+                glMaterialfv(GL_FRONT, GL_SPECULAR, &currentMesh.MeshMaterial.Ks.X);
+                glMateriali(GL_FRONT, GL_SHININESS, currentMesh.MeshMaterial.Ns);
+                glTexCoord2f(currentMesh.Vertices[currentMesh.Indices[j]].TextureCoordinate.X, currentMesh.Vertices[currentMesh.Indices[j]].TextureCoordinate.Y);
                 glNormal3f(currentMesh.Vertices[currentMesh.Indices[j]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Z);
                 glVertex3f(currentMesh.Vertices[currentMesh.Indices[j]].Position.X, currentMesh.Vertices[currentMesh.Indices[j]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j]].Position.Z);
-
+                glTexCoord2f(currentMesh.Vertices[currentMesh.Indices[j+1]].TextureCoordinate.X, currentMesh.Vertices[currentMesh.Indices[j+1]].TextureCoordinate.Y);
                 glNormal3f(currentMesh.Vertices[currentMesh.Indices[j + 1]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j + 1]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j + 1]].Normal.Z);
                 glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Z);
-
+                glTexCoord2f(currentMesh.Vertices[currentMesh.Indices[j+2]].TextureCoordinate.X, currentMesh.Vertices[currentMesh.Indices[j+2]].TextureCoordinate.Y);
                 glNormal3f(currentMesh.Vertices[currentMesh.Indices[j + 2]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j + 2]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j + 2]].Normal.Z);
                 glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Z);
 
@@ -534,6 +611,7 @@ void glut_display_func()
 
         }
         glPopMatrix();
+       
     }
 
 

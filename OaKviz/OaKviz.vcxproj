@@ -28,6 +28,7 @@
     <ClCompile Include="src\external\imgui\imgui_impl_glut.cpp" />
     <ClCompile Include="src\external\imgui\imgui_impl_opengl2.cpp" />
     <ClCompile Include="src\external\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\external\stb\stb_vorbis.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Application.h" />
@@ -326,6 +327,27 @@
     <ClInclude Include="src\external\imgui\imstb_textedit.h" />
     <ClInclude Include="src\external\imgui\imstb_truetype.h" />
     <ClInclude Include="src\external\OBJLoader\OBJ_Loader.h" />
+    <ClInclude Include="src\external\stb\stb.h" />
+    <ClInclude Include="src\external\stb\stb_connected_components.h" />
+    <ClInclude Include="src\external\stb\stb_c_lexer.h" />
+    <ClInclude Include="src\external\stb\stb_divide.h" />
+    <ClInclude Include="src\external\stb\stb_ds.h" />
+    <ClInclude Include="src\external\stb\stb_dxt.h" />
+    <ClInclude Include="src\external\stb\stb_easy_font.h" />
+    <ClInclude Include="src\external\stb\stb_herringbone_wang_tile.h" />
+    <ClInclude Include="src\external\stb\stb_image.h" />
+    <ClInclude Include="src\external\stb\stb_image_resize.h" />
+    <ClInclude Include="src\external\stb\stb_image_write.h" />
+    <ClInclude Include="src\external\stb\stb_include.h" />
+    <ClInclude Include="src\external\stb\stb_leakcheck.h" />
+    <ClInclude Include="src\external\stb\stb_perlin.h" />
+    <ClInclude Include="src\external\stb\stb_rect_pack.h" />
+    <ClInclude Include="src\external\stb\stb_sprintf.h" />
+    <ClInclude Include="src\external\stb\stb_textedit.h" />
+    <ClInclude Include="src\external\stb\stb_tilemap_editor.h" />
+    <ClInclude Include="src\external\stb\stb_truetype.h" />
+    <ClInclude Include="src\external\stb\stb_voxel_render.h" />
+    <ClInclude Include="src\external\stb\stretchy_buffer.h" />
     <ClInclude Include="src\global_init.h" />
   </ItemGroup>
   <ItemGroup>

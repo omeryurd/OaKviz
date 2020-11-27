@@ -151,6 +151,9 @@ namespace objl
 		Material()
 		{
 			name;
+			Ka = Vector3(0.5, 0.5, 0.5);
+			Kd = Vector3(0.5, 0.5, 0.5);
+			Ks = Vector3(0.5, 0.5, 0.5);
 			Ns = 0.0f;
 			Ni = 0.0f;
 			d = 0.0f;
@@ -439,6 +442,8 @@ namespace objl
 		Vector3 rotate;
 		Vector3 translate;
 		Vector3 scale;
+		bool hasTexture = false;
+		unsigned int texId = NULL;
 		//box = 1, sphere = 0, rect, box1, sphere1
 		//
 		// Load a file into the loader
