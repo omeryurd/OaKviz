@@ -151,7 +151,9 @@ void ImGui_ImplGLUT_KeyboardFunc(unsigned char c, int x, int y)
     if (c == 's') {
         m_camera.SetCameraView(m_camera.GetEye() - view, m_camera.GetLookAt(), m_camera.GetUpVector());
     }
-    
+    if (c == 'r' || c == 'R') {
+        m_camera.SetCameraView(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    }
 
     glutPostRedisplay();
     ImGui_ImplGLUT_UpdateKeyboardMods();
@@ -330,7 +332,15 @@ void ImGui_ImplGLUT_MotionFunc(int x, int y)
     }
 
     if (pan_on) {
-        const float cameraSpeed = 0.1f;
+        //const float cameraSpeed = 50*io.DeltaTime;
+        float cameraSpeed = 0.2;
+        if (io.DeltaTime < 0.0085) {
+            cameraSpeed = 0.2;
+        }
+        else {
+            cameraSpeed = io.DeltaTime * 20;
+        }
+        printf("d: %f\n", io.DeltaTime);
         glm::vec3 targetToEye;
         glm::vec3 finalLookx;
         glm::vec3 finalLooky;

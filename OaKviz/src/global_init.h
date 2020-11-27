@@ -21,7 +21,7 @@ float m_lastMousePosX = 1280.0f / 2.0;
 float m_lastMousePosY = 720.0f / 2.0;
 bool arcball_on = false;
 bool pan_on = false;
-Camera m_camera(glm::vec3(0.0f, 0.0f, 15.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+Camera m_camera(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 glm::vec3 m_upVector(0.0f, 1.0f, 0.0f);
 
 float pan_x = 0;

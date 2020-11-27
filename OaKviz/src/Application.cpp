@@ -13,6 +13,10 @@
 #include "OBJLoader/OBJ_Loader.h"
 #include "glm/vec3.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtx/transform.hpp"
+#include "glm/gtc/quaternion.hpp"
+#include "glm/gtx/quaternion.hpp"
+#include "glm/gtc/type_ptr.hpp"
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
@@ -42,9 +46,9 @@ static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 static ImVec4 clear_color2 = ImVec4(0.35f, 0.45f, 0.60f, 1.00f);
 objl::Loader Loader;
 GLfloat global_light[] = { 0.5, 0.5, 0.5, 1.0 };
-GLfloat ambient_light[] = { 0.0, 0.0, 0.0, 1.0 };
-GLfloat diffuse_light[] = { 0.0, 0.0, 0.0, 1.0 };
-GLfloat specular_light[] = { 1.0, 0.0, 0.0, 1.0 };
+GLfloat ambient_light[] = { 0.6, 0.6, 0.6, 1.0 };
+GLfloat diffuse_light[] = { 0.6, 0.6, 0.6, 1.0 };
+GLfloat specular_light[] = { 0.2, 0.2, 0.2, 1.0 };
 //GLfloat colors[] = { 0.2, 0.2, 0.2, 0.35, 0.35, 0.35,0.5, 0.5, 0.5, 0.65, 0.65, 0.65,0.8, 0.8, 0.8, 0.95, 0.95, 0.95 };
 GLfloat colors[] = { 1.0, 0.5, 0, 0.5, 0, 0,0.4, 0, 0, 0.2, 0, 0,.3, 0, 0, .7, 0, 0 };
 GLfloat light_position[] = { 0,0, -10 , 1.0};
@@ -74,7 +78,7 @@ int main(int argc, char** argv)
     glutDisplayFunc(glut_display_func);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    addToScene(loadedObjs, "light.obj");
+    addToScene(loadedObjs, "lightObj3.obj");
     glutDisplayFunc(glut_display_func);
     //glutKeyboardFunc(glut_keyboard_func);
     //glutMouseFunc(mouse_callback_func);
@@ -155,14 +159,14 @@ void init_other() {
 
     glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
     glShadeModel(GL_SMOOTH);
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_light);
+    //glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_light);
     
     glMatrixMode(GL_MODELVIEW); 
     glLoadIdentity();
     glEnable(GL_RESCALE_NORMAL);
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, specular_light);
+    //glLightfv(GL_LIGHT0, GL_SPECULAR, specular_light);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     glEnable(GL_LIGHT0);
 
@@ -290,15 +294,15 @@ void my_display_code()
        // std::string zRot = "Rotation Z";
        // //zRot.append(std::to_string(selected));
              
-        ImGui::SliderFloat("Rotation X", &loadedObjs[selected]->rotate.X, -180.0f, 180.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-        ImGui::SliderFloat("Rotation Y", &loadedObjs[selected]->rotate.Y, -180.0f, 180.0f);
-        ImGui::SliderFloat("Rotation Z", &loadedObjs[selected]->rotate.Z, -180.0f, 180.0f);
+        ImGui::SliderFloat("X##rotateX", &loadedObjs[selected]->rotate.X, -180.0f, 180.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+        ImGui::SliderFloat("Y##rotateY", &loadedObjs[selected]->rotate.Y, -180.0f, 180.0f);
+        ImGui::SliderFloat("Z##rotateZ", &loadedObjs[selected]->rotate.Z, -180.0f, 180.0f);
 
         ImGui::Text("Scale:");
      
-        ImGui::DragFloat("Scale X", &loadedObjs[selected]->scale.X, 0.02f, 0.0f, FLT_MAX, "%.04f");
-        ImGui::DragFloat("Scale Y", &loadedObjs[selected]->scale.Y, 0.02f, 0.0f, FLT_MAX, "%.04f");
-        ImGui::DragFloat("Scale Z", &loadedObjs[selected]->scale.Z, 0.02f, 0.0f, FLT_MAX, "%.04f");
+        ImGui::DragFloat("X##scaleX", &loadedObjs[selected]->scale.X, 0.02f, 0.0f, FLT_MAX, "%.04f");
+        ImGui::DragFloat("Y##scaleY", &loadedObjs[selected]->scale.Y, 0.02f, 0.0f, FLT_MAX, "%.04f");
+        ImGui::DragFloat("Z##scaleY", &loadedObjs[selected]->scale.Z, 0.02f, 0.0f, FLT_MAX, "%.04f");
         ImGui::Text("Translate:");
         //std::string xRot = "X";
         ////xRot.append(std::to_string(selected));
@@ -307,9 +311,9 @@ void my_display_code()
         //std::string zRot = "Z";
         ////zRot.append(std::to_string(selected));
      
-        ImGui::SliderFloat("Translate X", &loadedObjs[selected]->translate.X, -180.0f, 180.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-        ImGui::SliderFloat("Translate Y", &loadedObjs[selected]->translate.Y, -180.0f, 180.0f);
-        ImGui::SliderFloat("Translate Z", &loadedObjs[selected]->translate.Z, -180.0f, 180.0f);
+        ImGui::SliderFloat("X##translateX", &loadedObjs[selected]->translate.X, -180.0f, 180.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+        ImGui::SliderFloat("Y##translateY", &loadedObjs[selected]->translate.Y, -180.0f, 180.0f);
+        ImGui::SliderFloat("Z##translateZ", &loadedObjs[selected]->translate.Z, -180.0f, 180.0f);
     }
 
     ImGui::End();
@@ -374,31 +378,35 @@ void glut_display_func()
     glLoadIdentity();
     myLookAt();
     glPushMatrix();
-   
+    glDisable(GL_LIGHTING);
     glTranslatef(-light_position[0],- light_position[1], -light_position[2]);
   
     //glTranslatef(-10, 10, 5);
    
-
-
-        objl::Mesh currentMesh = loadedObjs[0]->LoadedMeshes[0];
+    
+    for (int i = 0; i < loadedObjs[0]->LoadedMeshes.size(); i++) {
+        objl::Mesh currentMesh = loadedObjs[0]->LoadedMeshes[i];
 
         for (int j = 0, ct = 0; j < currentMesh.Indices.size(); j += 3) {
-           
+
             glBegin(GL_LINE_LOOP);
+            glColor3f(0.0, 0.0, 0.0);
             glVertex3f(currentMesh.Vertices[currentMesh.Indices[j]].Position.X, currentMesh.Vertices[currentMesh.Indices[j]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j]].Position.Z);
 
-            
+
             glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Z);
 
-           
+
             glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Z);
 
             glEnd();
 
 
         }
+    }
     glPopMatrix();
+    glEnable(GL_LIGHTING);
+
     //Grid -------
     GLfloat grid2x2[2][2][3] = {
   {{-2.0, -2.0, 0.0}, {4.0, -2.0, 0.0}},
@@ -458,12 +466,36 @@ void glut_display_func()
     for (int l = 1; l < loadedObjs.size(); l++){
         glPushMatrix();
         glTranslatef(loadedObjs[l]->translate.X, loadedObjs[l]->translate.Y, loadedObjs[l]->translate.Z);
-        //glTranslatef(xCoord, yCoord, zCoord);
+     
+        glm::quat MyQuaternion;
+
+        // Direct specification of the 4 components
+        // You almost never use this directly
+        MyQuaternion = glm::quat(1, 1, 1, 1);
+
+        // Conversion from Euler angles (in radians) to Quaternion
+        glm::vec3 EulerAngles(90, 45, 0);
+        MyQuaternion = glm::quat(EulerAngles);
+
+        // Conversion from axis-angle
+        // In GLM the angle must be in degrees here, so convert it.
+        MyQuaternion = glm::angleAxis(glm::radians(loadedObjs[l]->rotate.Y),glm::vec3(0.0f,1.0f,0.0f));
+        
+      
+
+        glm::mat4 RotationMatrix = glm::toMat4(MyQuaternion);
+
+        float dArray[16] = { 0.0 };
+
+        const float* pSource = (const float*)glm::value_ptr(RotationMatrix);
+        for (int i = 0; i < 16; ++i)
+            dArray[i] = pSource[i];
+
+        glMultMatrixf(dArray);
         glRotatef(loadedObjs[l]->rotate.X, 1.0, 0.0, 0.0);
-        glRotatef(loadedObjs[l]->rotate.Y, 0.0, 1.0, 0.0);
+        //glRotatef(loadedObjs[l]->rotate.Y, 0.0, 1.0, 0.0);
         glRotatef(loadedObjs[l]->rotate.Z, 0.0, 0.0, 1.0);
         glScalef(loadedObjs[l]->scale.X, loadedObjs[l]->scale.Y, loadedObjs[l]->scale.Z);
-
         for (int i = 0; i < loadedObjs[l]->LoadedMeshes.size(); i++) {
             objl::Mesh currentMesh = loadedObjs[l]->LoadedMeshes[i];
 
@@ -481,7 +513,11 @@ void glut_display_func()
                 glMaterialfv(GL_FRONT, GL_DIFFUSE, &currentMesh.MeshMaterial.Kd.X);
                 glMaterialfv(GL_FRONT, GL_SPECULAR, &currentMesh.MeshMaterial.Ks.X);    
                 glMateriali(GL_FRONT, GL_SHININESS, currentMesh.MeshMaterial.Ns);    
-
+                //std::cout << currentMesh.Vertices[currentMesh.Indices[j]].Normal.X << " " << currentMesh.Vertices[currentMesh.Indices[j]].Normal.Y << " " << currentMesh.Vertices[currentMesh.Indices[j]].Normal.Z << std::endl;
+                //std::cout << currentMesh.Vertices[currentMesh.Indices[j+1]].Normal.X << " " << currentMesh.Vertices[currentMesh.Indices[j+1]].Normal.Y << " " << currentMesh.Vertices[currentMesh.Indices[j+1]].Normal.Z << std::endl;
+                //std::cout << currentMesh.Vertices[currentMesh.Indices[j+2]].Normal.X << " " << currentMesh.Vertices[currentMesh.Indices[j+2]].Normal.Y << " " << currentMesh.Vertices[currentMesh.Indices[j+2]].Normal.Z << std::endl;
+                //std::cout << currentMesh.Vertices.size() << std::endl;
+                //std::cout << loadedObjs[l]->LoadedVertices.size() << std::endl;
                 glNormal3f(currentMesh.Vertices[currentMesh.Indices[j]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Z);
                 glVertex3f(currentMesh.Vertices[currentMesh.Indices[j]].Position.X, currentMesh.Vertices[currentMesh.Indices[j]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j]].Position.Z);
 
