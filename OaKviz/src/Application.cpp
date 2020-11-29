@@ -4,7 +4,6 @@
 // !!! GLUT/FreeGLUT IS OBSOLETE SOFTWARE. Using GLUT is not recommended unless you really miss the 90's. !!!
 // !!! If someone or something is teaching you GLUT in 2020, you are being abused. Please show some resistance. !!!
 // !!! Nowadays, prefer using GLFW or SDL instead!
-
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glut.h"
 #include "imgui/imgui_impl_opengl2.h"
@@ -24,8 +23,9 @@
 #include <stdio.h>
 #include <string>
 #include "Application.h"
-
-
+#include "core/Camera.h"
+#include "core/shader.h"
+extern Camera m_camera;
 
 #include <GL/glew.h>
 #ifdef __APPLE__
@@ -42,7 +42,8 @@
 
 //void mouse_callback_func(int button, int state, int x, int y);
 // Our state
-extern "C" bool loadTexture(std::string path);
+extern "C" bool loadTexture(std::string path, objl::Loader * &objectModel);
+void deleteTexture(objl::Loader*& objectModel);
 static bool show_demo_window = true;
 static bool show_another_window = false;
 static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -66,7 +67,56 @@ GLuint* textureIds;
 bool hasTexture = false;
 static int selected = 0;
 
+//----SkyBox related
+Shader* skyboxShader;
+unsigned int skyboxVAO, skyboxVBO;
+unsigned int cubemapTexture;
+unsigned int loadCubemap(std::vector<std::string> faces);
+float skyboxVertices[] = {
+    // positions          
+    -1.0f,  1.0f, -1.0f,
+    -1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
 
+    -1.0f, -1.0f,  1.0f,
+    -1.0f, -1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f,  1.0f,
+    -1.0f, -1.0f,  1.0f,
+
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+
+    -1.0f, -1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f, -1.0f,  1.0f,
+    -1.0f, -1.0f,  1.0f,
+
+    -1.0f,  1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f,
+     1.0f,  1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f, -1.0f,
+
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f,  1.0f
+};
+//-------------
 
 // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
 // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
@@ -77,10 +127,32 @@ int main(int argc, char** argv)
 {
     //const char* pathName = "box_stack.obj";
     
-    //loadObj(pathName);
     // Create GLUT windows
     init_window(argc, argv);
     init_other();
+    //Skybox
+  /*  std::vector<std::string> faces
+    {
+        "skybox/right.jpg",
+        "skybox/left.jpg",
+        "skybox/top.jpg",
+        "skybox/bottom.jpg",
+        "skybox/front.jpg",
+        "skybox/back.jpg"
+    };
+
+    cubemapTexture = loadCubemap(faces);
+    skyboxShader = new Shader("6.1.skybox.vs", "6.1.skybox.fs");
+    skyboxShader->use();
+    skyboxShader->setInt("skybox", 0);
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);*/
+    //-----
     glutDisplayFunc(glut_display_func);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -154,6 +226,7 @@ void init_window(int argc, char** argv) {
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_MULTISAMPLE | GLUT_DEPTH);
     glutInitWindowSize(1280, 720);
     glutCreateWindow("OakViz");
+    GLenum err = glewInit();
 }
 
 void normalizeCoordinates() {
@@ -188,7 +261,7 @@ void init_other() {
 
 }
 
-bool loadTexture(std::string path) {
+bool loadTexture(std::string path, objl::Loader* &objectModel) {
     int x, y, n;
     stbi_set_flip_vertically_on_load(true);
     unsigned char* data = stbi_load(path.c_str(), &x, &y, &n, STBI_rgb);
@@ -223,8 +296,8 @@ bool loadTexture(std::string path) {
         glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
         stbi_image_free(data);
         //glDeleteTextures()
-        loadedObjs[selected]->hasTexture = true;
-        loadedObjs[selected]->texId = *texId;
+        objectModel->hasTexture = true;
+        objectModel->texId = texId;
         glEnable(GL_TEXTURE_2D);
     }
     else
@@ -235,11 +308,46 @@ bool loadTexture(std::string path) {
     }
 }
 
+void deleteTexture( objl::Loader*& objectModel) {
+    glDeleteTextures(1, objectModel->texId);
+    objectModel->hasTexture = false;
+}
+
+unsigned int loadCubemap(std::vector<std::string> faces)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+}
+
+
 void showMainMenu()
 {
     static imgui_addons::ImGuiFileBrowser file_dialog;
     bool open = false, save = false;
-    bool tex = false;
     if (ImGui::BeginMainMenuBar())
     {
         if (ImGui::BeginMenu("Menu"))
@@ -248,8 +356,7 @@ void showMainMenu()
                 open = true;
             if (ImGui::MenuItem("Save", NULL))
                 save = true;
-            if (ImGui::MenuItem("Load Texture", NULL))
-                tex = true;
+           
 
             ImGui::EndMenu();
         }
@@ -261,8 +368,7 @@ void showMainMenu()
         ImGui::OpenPopup("Open File");
     if (save)
         ImGui::OpenPopup("Save File");
-    if (tex)
-        ImGui::OpenPopup("Load Texture");
+   
 
     /* Optional third parameter. Support opening only compressed rar/zip files.
      * Opening any other file will show error, return false and won't close the dialog.
@@ -275,15 +381,6 @@ void showMainMenu()
         addToScene(loadedObjs, pathName);
         //loadedObjs[selected]->hasTexture  = loadTexture("Cottage_Dirt_Base_Color.png", loadedObjs[selected]->texId);
        
-        std::cout << file_dialog.selected_path << std::endl;    // The absolute path to the selected file
-    }
-    if (file_dialog.showFileDialog("Load Texture", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".jpg,.png,.7z"))
-    {
-        std::cout << file_dialog.selected_fn << std::endl;      // The name of the selected file or directory in case of Select Directory dialog mode
-        const char* pathName = file_dialog.selected_fn.c_str();
-
-        loadedObjs[selected]->hasTexture = loadTexture(pathName);
-
         std::cout << file_dialog.selected_path << std::endl;    // The absolute path to the selected file
     }
     if (file_dialog.showFileDialog("Save File", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700, 310), ".png,.jpg,.bmp"))
@@ -341,22 +438,30 @@ void glut_keyboard_func(unsigned char c, int x, int y) {
 
 void my_display_code()
 {
+    static imgui_addons::ImGuiFileBrowser file_dialog2;
+    bool tex = false;
+    
+
+    //--------------------------------
     int selectedIndex = 0;
     ImGui::Begin("New Window!");
-    
-    for (int n = 0; n < loadedObjs.size(); n++)
-    {
-        char buf[32];
-        sprintf(buf, "Object %d", n);
-        if (ImGui::Selectable(loadedObjs[n]->objectName.c_str(),selected == n)) {
-            selected = n;
-            selectedIndex = n;
+    //ImGui::TextColored(ImVec4(0.753, 0.753, 0.753, 1.0f), "Loaded Objects:");
+    if (ImGui::CollapsingHeader("Loaded Objects", ImGuiTreeNodeFlags_None)) {
+        for (int n = 0; n < loadedObjs.size(); n++)
+        {
+            char buf[32];
+            sprintf(buf, "Object %d", n);
+            if (ImGui::Selectable(loadedObjs[n]->objectName.c_str(), selected == n)) {
+                selected = n;
+                selectedIndex = n;
+            }
+
         }
-            
     }
     //if(selectedIndex != 0)
    
     if(!loadedObjs.empty()) {
+
         ImGui::Text("Rotation:");
        // std::string xRot = "Rotation X";
        // //xRot.append(std::to_string(selected));
@@ -385,6 +490,42 @@ void my_display_code()
         ImGui::SliderFloat("X##translateX", &loadedObjs[selected]->translate.X, -180.0f, 180.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
         ImGui::SliderFloat("Y##translateY", &loadedObjs[selected]->translate.Y, -180.0f, 180.0f);
         ImGui::SliderFloat("Z##translateZ", &loadedObjs[selected]->translate.Z, -180.0f, 180.0f);
+        ImGui::Text("Texture: ", loadedObjs[selected]->texId);
+        // Load Texture Button
+        if (ImGui::Button("Load Texture"))
+            tex = true;
+        if (tex)
+            ImGui::OpenPopup("Load Texture");
+
+        if (file_dialog2.showFileDialog("Load Texture", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".jpg,.png,.7z"))
+        {
+            std::cout << file_dialog2.selected_fn << std::endl;      // The name of the selected file or directory in case of Select Directory dialog mode
+            const char* pathName = file_dialog2.selected_fn.c_str();
+
+            loadedObjs[selected]->hasTexture = loadTexture(pathName, loadedObjs[selected]);
+
+            std::cout << file_dialog2.selected_path << std::endl;    // The absolute path to the selected file
+        }
+        //Delete Texture
+        ImGui::SameLine(); if (ImGui::Button("Delete Texture")) {
+            if (loadedObjs[selected]->hasTexture) {
+                deleteTexture(loadedObjs[selected]);
+            }
+           
+        }
+        // Load Texture Button Ends--------
+        if (loadedObjs[selected]->hasTexture) {
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, *loadedObjs[selected]->texId);
+            
+            
+            ImGui::Text("Size = %d x %d", 64, 64);
+            ImGui::Image((void*)(intptr_t)*loadedObjs[selected]->texId, ImVec2(64, 64));
+            
+        }
+        else {
+            glDisable(GL_TEXTURE_2D);
+        }
     }
 
     ImGui::End();
@@ -443,6 +584,28 @@ void glut_display_func()
     glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context where shaders may be bound, but prefer using the GL3+ code
+      //Skybox
+    // draw scene as normal
+    //skyboxShader->use();
+    //skyboxShader->setInt("skybox", 0);
+    //// draw skybox as last
+    //glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
+    //skyboxShader->use();
+    //glm::mat4 view = m_camera.GetViewMatrix();
+    //glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)1280 / (float)720, 0.1f, 100.0f);
+    //view = glm::mat4(glm::mat3(m_camera.GetViewMatrix())); // remove translation from the view matrix
+    //skyboxShader->setMat4("view", view);
+    //skyboxShader->setMat4("projection", projection);
+    //// skybox cube
+    //glBindVertexArray(skyboxVAO);
+    //glActiveTexture(GL_TEXTURE0);
+    //glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+    //glDrawArrays(GL_TRIANGLES, 0, 36);
+    //glBindVertexArray(0);
+    //glDepthFunc(GL_LESS); // set depth function back to default
+    //glDeleteVertexArrays(1, &skyboxVAO);
+    //glDeleteBuffers(1, &skyboxVAO);
+    //----------
 
     glColor3f(1.0, 0.0, 0.0);
     glMatrixMode(GL_MODELVIEW);
@@ -570,7 +733,7 @@ void glut_display_func()
         
         if(loadedObjs[l]->hasTexture){
             glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, loadedObjs[l]->texId);
+            glBindTexture(GL_TEXTURE_2D, *loadedObjs[l]->texId);
         }
         else {
             glDisable(GL_TEXTURE_2D);

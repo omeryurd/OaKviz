@@ -443,7 +443,7 @@ namespace objl
 		Vector3 translate;
 		Vector3 scale;
 		bool hasTexture = false;
-		unsigned int texId = NULL;
+		unsigned int *texId = NULL;
 		//box = 1, sphere = 0, rect, box1, sphere1
 		//
 		// Load a file into the loader

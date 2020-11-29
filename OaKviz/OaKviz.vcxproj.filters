@@ -1001,6 +1001,9 @@
     <ClInclude Include="src\external\stb\stb_easy_font.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\external\glm\detail\func_common.inl">
@@ -1411,5 +1414,7 @@
     <None Include="src\external\glm\gtx\wrap.inl">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="6.1.skybox.fs" />
+    <None Include="6.1.skybox.vs" />
   </ItemGroup>
 </Project>

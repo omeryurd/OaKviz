@@ -34,6 +34,7 @@
     <ClInclude Include="src\Application.h" />
     <ClInclude Include="src\core\Camera.h" />
     <ClInclude Include="src\core\Mesh.h" />
+    <ClInclude Include="src\core\shader.h" />
     <ClInclude Include="src\external\FileBrowser\Dirent\dirent.h" />
     <ClInclude Include="src\external\FileBrowser\ImGuiFileBrowser.h" />
     <ClInclude Include="src\external\glm\common.hpp" />
@@ -351,6 +352,8 @@
     <ClInclude Include="src\global_init.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="6.1.skybox.fs" />
+    <None Include="6.1.skybox.vs" />
     <None Include="src\external\glm\detail\func_common.inl" />
     <None Include="src\external\glm\detail\func_common_simd.inl" />
     <None Include="src\external\glm\detail\func_exponential.inl" />
