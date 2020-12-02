@@ -33,6 +33,7 @@
   <ItemGroup>
     <ClInclude Include="src\Application.h" />
     <ClInclude Include="src\core\Camera.h" />
+    <ClInclude Include="src\core\Light.h" />
     <ClInclude Include="src\core\Mesh.h" />
     <ClInclude Include="src\core\shader.h" />
     <ClInclude Include="src\external\FileBrowser\Dirent\dirent.h" />
