@@ -160,7 +160,7 @@ public:
 		attenuationCoeff = 1;
 		attenuationType = 0x1207;
 		lightDirection = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-		setLightPosition(glm::vec4(0.0f, -10.0f, 0.0f, 1.0f));
+		setLightPosition(glm::vec4(0.0f, 0.0f, -10.0f, 1.0f));
 	}
 	~PositionalLight() {
 
