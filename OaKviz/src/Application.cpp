@@ -134,6 +134,7 @@ int main(int argc, char** argv)
 
 	// Create GLUT windows
 	init_window(argc, argv);
+
 	init_other();
 	//Skybox
 	//std::vector<std::string> faces
@@ -172,7 +173,7 @@ int main(int argc, char** argv)
 	glutDisplayFunc(glut_display_func);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	addToScene(loadedObjs, "lightObj3.obj");
+	//addToScene(loadedObjs, "lightObj3.obj");
 	glutDisplayFunc(glut_display_func);
 	//glutKeyboardFunc(glut_keyboard_func);
 	//glutMouseFunc(mouse_callback_func);
@@ -492,6 +493,38 @@ void glut_keyboard_func(unsigned char c, int x, int y) {
 	glutPostRedisplay();
 }
 
+void deleteObjPopUp(std::vector<objl::Loader*> &objects, unsigned int index) {
+	if (ImGui::Button("Delete.."))
+		ImGui::OpenPopup("Delete?");
+
+	// Always center this window when appearing
+	ImVec2 center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+	if (ImGui::BeginPopupModal("Delete?", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("Are you sure you want to delete the object?\n\n");
+		ImGui::Separator();
+
+		//static int unused_i = 0;
+		//ImGui::Combo("Combo", &unused_i, "Delete\0Delete harder\0");
+
+		static bool dont_ask_me_next_time = false;
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+		ImGui::Checkbox("Don't ask me next time", &dont_ask_me_next_time);
+		ImGui::PopStyleVar();
+
+		if (ImGui::Button("OK", ImVec2(120, 0))) { 
+			ImGui::CloseCurrentPopup();
+			objects.erase(objects.begin() + index);
+		}
+		ImGui::SetItemDefaultFocus();
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+		ImGui::EndPopup();
+	}
+}
+
 void my_display_code()
 {
 	static imgui_addons::ImGuiFileBrowser file_dialog2;
@@ -541,7 +574,7 @@ void my_display_code()
 
 	}
 	if (selected >= 0) {
-
+		bool objectExists = true;
 		if (!loadedObjs.empty()) {
 
 			ImGui::Text("Rotation:");
@@ -560,41 +593,81 @@ void my_display_code()
 			ImGui::SliderFloat("X##translateX", &loadedObjs[selected]->translate.X, -180.0f, 180.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 			ImGui::SliderFloat("Y##translateY", &loadedObjs[selected]->translate.Y, -180.0f, 180.0f);
 			ImGui::SliderFloat("Z##translateZ", &loadedObjs[selected]->translate.Z, -180.0f, 180.0f);
-			ImGui::Text("Texture: ", loadedObjs[selected]->texId);
-			// Load Texture Button
-			if (ImGui::Button("Load Texture"))
-				tex = true;
-			if (tex)
-				ImGui::OpenPopup("Load Texture");
+			if (!loadedObjs.empty()) {
+				// Delete an Object
+				if (ImGui::Button("Delete Object.."))
+					ImGui::OpenPopup("Delete?");
 
-			if (file_dialog2.showFileDialog("Load Texture", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".jpg,.png,.7z"))
-			{
-				std::cout << file_dialog2.selected_fn << std::endl;      // The name of the selected file or directory in case of Select Directory dialog mode
-				const char* pathName = file_dialog2.selected_fn.c_str();
+				// Always center this window when appearing
+				ImVec2 center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
+				ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
-				loadedObjs[selected]->hasTexture = loadTexture(pathName, loadedObjs[selected]);
+				if (ImGui::BeginPopupModal("Delete?", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+				{
 
-				std::cout << file_dialog2.selected_path << std::endl;    // The absolute path to the selected file
-			}
-			//Delete Texture
-			ImGui::SameLine(); if (ImGui::Button("Delete Texture")) {
-				if (loadedObjs[selected]->hasTexture) {
-					deleteTexture(loadedObjs[selected]);
+					ImGui::Text("Are you sure you want to delete the object?\n\n");
+					ImGui::Separator();
+
+					//static int unused_i = 0;
+					//ImGui::Combo("Combo", &unused_i, "Delete\0Delete harder\0");
+
+					static bool dont_ask_me_next_time = false;
+					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+					ImGui::Checkbox("Don't ask me next time", &dont_ask_me_next_time);
+					ImGui::PopStyleVar();
+
+					if (ImGui::Button("OK", ImVec2(120, 0))) {
+						ImGui::CloseCurrentPopup();
+						if (loadedObjs[selected]->hasTexture)
+							deleteTexture(loadedObjs[selected]);
+						loadedObjs.erase(loadedObjs.begin() + selected);
+						selected = -1;
+						objectExists = false;
+					}
+					ImGui::SetItemDefaultFocus();
+					ImGui::SameLine();
+					if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+					ImGui::EndPopup();
 				}
+				//------ Delete object ends
+				if (objectExists) {
+					ImGui::Text("Texture: ", loadedObjs[selected]->texId);
+					// Load Texture Button
+					if (ImGui::Button("Load Texture"))
+						tex = true;
+					if (tex)
+						ImGui::OpenPopup("Load Texture");
 
-			}
-			// Load Texture Button Ends--------
-			if (loadedObjs[selected]->hasTexture) {
-				glEnable(GL_TEXTURE_2D);
-				glBindTexture(GL_TEXTURE_2D, *loadedObjs[selected]->texId);
+					if (file_dialog2.showFileDialog("Load Texture", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".jpg,.png,.7z"))
+					{
+						std::cout << file_dialog2.selected_fn << std::endl;      // The name of the selected file or directory in case of Select Directory dialog mode
+						const char* pathName = file_dialog2.selected_fn.c_str();
+
+						loadedObjs[selected]->hasTexture = loadTexture(pathName, loadedObjs[selected]);
+
+						std::cout << file_dialog2.selected_path << std::endl;    // The absolute path to the selected file
+					}
+					//Delete Texture
+					ImGui::SameLine(); if (ImGui::Button("Delete Texture")) {
+						if (loadedObjs[selected]->hasTexture) {
+							deleteTexture(loadedObjs[selected]);
+						}
+
+					}
+					// Load Texture Button Ends--------
+					if (loadedObjs[selected]->hasTexture) {
+						glEnable(GL_TEXTURE_2D);
+						glBindTexture(GL_TEXTURE_2D, *loadedObjs[selected]->texId);
 
 
-				ImGui::Text("Size = %d x %d", 64, 64);
-				ImGui::Image((void*)(intptr_t)*loadedObjs[selected]->texId, ImVec2(64, 64));
+						ImGui::Text("Size = %d x %d", 64, 64);
+						ImGui::Image((void*)(intptr_t)*loadedObjs[selected]->texId, ImVec2(64, 64));
 
-			}
-			else {
-				glDisable(GL_TEXTURE_2D);
+					}
+					else {
+						glDisable(GL_TEXTURE_2D);
+					}
+				}
 			}
 		}
 	}
@@ -729,9 +802,9 @@ void glut_display_func()
 
 
 
-
-	glPushMatrix();
 	glDisable(GL_LIGHTING);
+	/*glPushMatrix();
+	
 	glTranslatef(-light_position[0], -light_position[1], -light_position[2]);
 
 
@@ -756,7 +829,7 @@ void glut_display_func()
 
 		}
 	}
-	glPopMatrix();
+	glPopMatrix();*/
 
 	
 	glColor4f(1, 0, 0, 1);
@@ -767,7 +840,7 @@ void glut_display_func()
 		
 		glBegin(GL_POINT);
 		if (PositionalLight* pointLight = dynamic_cast<PositionalLight*>(lightVector[i])) {
-			std::cout << pointLight->getLightDirection().x << " " << pointLight->getLightDirection().y << " " << pointLight->getLightDirection().z << std::endl;
+			//std::cout << pointLight->getLightDirection().x << " " << pointLight->getLightDirection().y << " " << pointLight->getLightDirection().z << std::endl;
 			glVertex3fv(glm::value_ptr(pointLight->getLightDirection()));
 		}
 		glEnd();
@@ -841,7 +914,7 @@ void glut_display_func()
 	float clearCol[] = { clear_color.x, clear_color.y, clear_color.z };
 	float clearCol2[] = { clear_color2.x, clear_color2.y, clear_color2.z };
 
-	for (int l = 1; l < loadedObjs.size(); l++) {
+	for (int l = 0; l < loadedObjs.size(); l++) {
 		glPushMatrix();
 		glTranslatef(loadedObjs[l]->translate.X, loadedObjs[l]->translate.Y, loadedObjs[l]->translate.Z);
 
