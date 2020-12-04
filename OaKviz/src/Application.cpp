@@ -25,6 +25,8 @@
 #include "glm/ext.hpp"
 #include <stdio.h>
 #include <string>
+#include <math.h>
+#define M_PI       3.14159265358979323846
 #include "Application.h"
 #include "core/Camera.h"
 #include "core/shader.h"
@@ -48,6 +50,7 @@ extern Camera m_camera;
 // Our state
 extern "C" bool loadTexture(std::string path, objl::Loader * &objectModel);
 void deleteTexture(objl::Loader*& objectModel);
+void drawCircle(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLint numberOfSides);
 static bool show_demo_window = true;
 static bool show_another_window = false;
 static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -70,7 +73,7 @@ static float zCoord = 0.0f;
 GLuint* textureIds;
 bool hasTexture = false;
 static int selected = 0;
-static int selectedLight = 0;
+static int selectedLight = -1;
 std::vector<Light*> lightVector;
 
 //DirectionalLight dirLight;
@@ -169,7 +172,7 @@ int main(int argc, char** argv)
 	PositionalLight* poLight;
 	poLight = new PositionalLight(GL_LIGHT2);*/
 
-	//lightVector.push_back(new PointLight(GL_LIGHT0));
+	lightVector.push_back(new PointLight(GL_LIGHT0));
 	lightVector.push_back(new DirectionalLight(GL_LIGHT1));
 	lightVector.push_back(new PositionalLight(GL_LIGHT2));
 
@@ -249,21 +252,47 @@ void init_window(int argc, char** argv) {
 	GLenum err = glewInit();
 }
 
-void normalizeCoordinates() {
-	//Normalize Vertices
 
-}
 
-void DrawCircle(float cx, float cy, float r, int num_segments) {
-	glBegin(GL_LINE_LOOP);
-	for (int ii = 0; ii < num_segments; ii++) {
-		float theta = 2.0f * 3.1415926f * float(ii) / float(num_segments);//get the current angle 
-		float x = r * cosf(theta);//calculate the x component 
-		float y = r * sinf(theta);//calculate the y component 
-		glVertex2f(x + cx, y + cy);//output vertex 
+void drawCircle(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLint numberOfSides)
+{
+	GLint numberOfVertices = numberOfSides + 1;
+
+	GLfloat doublePi = 2.0f * M_PI;
+
+	GLfloat *circleVerticesX;
+	GLfloat *circleVerticesY;
+	GLfloat *circleVerticesZ;
+	circleVerticesX = new GLfloat[numberOfVertices];
+	circleVerticesY = new GLfloat[numberOfVertices];
+	circleVerticesZ = new GLfloat[numberOfVertices];
+	//circleVerticesX[0] = x;
+	//circleVerticesY[0] = y;
+	//circleVerticesZ[0] = z;
+
+	for (int i = 0; i < numberOfVertices; i++)
+	{
+		circleVerticesX[i] = x + (radius * cos(i * doublePi / numberOfSides));
+		circleVerticesY[i] = y + (radius * sin(i * doublePi / numberOfSides));
+		circleVerticesZ[i] = z;
 	}
-	glEnd();
+
+	GLfloat* allCircleVertices;
+	allCircleVertices = new GLfloat[numberOfVertices * 3];
+
+	for (int i = 0; i < numberOfVertices; i++)
+	{
+		allCircleVertices[i * 3] = circleVerticesX[i];
+		allCircleVertices[(i * 3) + 1] = circleVerticesY[i];
+		allCircleVertices[(i * 3) + 2] = circleVerticesZ[i];
+	}
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0, allCircleVertices);
+	glDrawArrays(GL_LINE_STRIP, 0, numberOfVertices);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
+
 
 void init_other() {
 	/* if(hasTexture)
@@ -375,13 +404,16 @@ unsigned int loadCubemap(std::vector<std::string> faces)
 
 
 void createLight(Light* light) {
-
+	
 	if (PointLight* pointLight = dynamic_cast<PointLight*>(light)) {
 		glLightfv(pointLight->getLightID(), GL_AMBIENT, glm::value_ptr(pointLight->getAmbientProperty()));
 		glLightfv(pointLight->getLightID(), GL_DIFFUSE, glm::value_ptr(pointLight->getDiffusedProperty()));
 		glLightfv(pointLight->getLightID(), GL_SPECULAR, glm::value_ptr(pointLight->getSpecularProperty()));
 		glLightfv(pointLight->getLightID(), GL_POSITION, glm::value_ptr(pointLight->getLightPosition()));
-		glEnable(pointLight->getLightID());
+		if (pointLight->visible) {
+			glEnable(pointLight->getLightID());
+		} else
+			glDisable(pointLight->getLightID());
 	}
 	else if (DirectionalLight* dirLight = dynamic_cast<DirectionalLight*>(light)) {
 		glLightfv(dirLight->getLightID(), GL_AMBIENT, glm::value_ptr(dirLight->getAmbientProperty()));
@@ -389,7 +421,11 @@ void createLight(Light* light) {
 		glLightfv(dirLight->getLightID(), GL_SPECULAR, glm::value_ptr(dirLight->getSpecularProperty()));
 		glLightfv(dirLight->getLightID(), GL_POSITION, glm::value_ptr(dirLight->getLightPosition()));
 		glLightfv(dirLight->getLightID(), GL_SPOT_DIRECTION, glm::value_ptr(dirLight->getLightDirection()));
-		glEnable(dirLight->getLightID());
+		if (dirLight->visible) {
+			glEnable(dirLight->getLightID());
+		}
+		else
+			glDisable(dirLight->getLightID());
 	}
 	else if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(light)) {
 		glLightfv(posLight->getLightID(), GL_AMBIENT, glm::value_ptr(posLight->getAmbientProperty()));
@@ -400,8 +436,14 @@ void createLight(Light* light) {
 		glLightf(posLight->getLightID(), GL_SPOT_CUTOFF, posLight->getCutoff());
 		glLightf(posLight->getLightID(), GL_SPOT_EXPONENT, posLight->getExponent());
 		glLightf(posLight->getLightID(), posLight->getAttenutationType(), posLight->getattenuationCoeff());
-		glEnable(posLight->getLightID());
+		if (posLight->visible) {
+			glEnable(posLight->getLightID());
+		}
+		else
+			glDisable(posLight->getLightID());
 	}
+
+	
 }
 
 
@@ -527,7 +569,7 @@ void deleteObjPopUp(std::vector<objl::Loader*>& objects, unsigned int index) {
 		ImGui::EndPopup();
 	}
 }
-
+glm::vec4 tempLightDir(1.0f);
 void my_display_code()
 {
 	static imgui_addons::ImGuiFileBrowser file_dialog2;
@@ -536,6 +578,7 @@ void my_display_code()
 	static float  ligtRotX = 0.0f;
 	static float  ligtRotY = 0.0f;
 	static float  ligtRotZ = 0.0f;
+	static float cutoff;
 	//--------------------------------
 
 	int selectedIndex = 0;
@@ -578,6 +621,7 @@ void my_display_code()
 	}
 	if (selected >= 0) {
 		bool objectExists = true;
+	
 		if (!loadedObjs.empty()) {
 
 			ImGui::Text("Rotation:");
@@ -674,46 +718,136 @@ void my_display_code()
 		}
 	}
 	else if (selectedLight >= 0) {
+		PositionalLight* posLight1 = dynamic_cast<PositionalLight*>(lightVector[selectedLight]);
+		DirectionalLight* dirLight1 = dynamic_cast<DirectionalLight*>(lightVector[selectedLight]);
+		ImGui::Checkbox("Visible", &lightVector[selectedLight]->visible);
+		if (PointLight* pointLight = dynamic_cast<PointLight*>(lightVector[selectedLight])) {
 
-
-		ImGui::Text("Rotation:");
-		ImGui::SliderFloat("X##rotatelightX", &ligtRotX, -180.0f, 180.0f);
-		ImGui::SliderFloat("Y##rotatelightY", &ligtRotY, -180.0f, 180.0f);
-		ImGui::SliderFloat("Z##rotatelightZ", &ligtRotZ, -180.0f, 180.0f);
-
-		if (DirectionalLight* dirLight = dynamic_cast<DirectionalLight*>(lightVector[selectedLight])) {
-
-	/*		glm::mat4 rotMat(1.0);
-
-			glm::rotate(rotMat, glm::radians(ligtRotX), glm::vec3(1.0f, 0.0f, 0.0f));
-			glm::rotate(rotMat, glm::radians(ligtRotY), glm::vec3(0.0f, 1.0f, 0.0f));
-			glm::rotate(rotMat, glm::radians(ligtRotZ), glm::vec3(0.0f, 0.0f, 1.0f));
-			glm::vec4 transVec;
-			dirLight->setLightDirection(rotMat * glm::translate(glm::vec3(dirLight->getLightDirection())) * glm::vec4(dirLight->getLightDirection(), 1.0));*/
 		}
-		else if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
-			glm::mat4x4 rotMat(1.0f);
-			std::cout << "1: " <<glm::to_string(posLight->getLightDirection()) << std::endl;
-			rotMat =  glm::rotate(glm::radians(ligtRotX), glm::vec3(1.0, 0.0, 0.0));
-			rotMat *= glm::rotate(glm::radians(ligtRotZ), glm::vec3(0.0, 0.0, 1.0));
-			rotMat *= glm::rotate(glm::radians(ligtRotY), glm::vec3(0.0, 1.0, 0.0));
-			
-			std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
- 			glm::mat4x4 translateLight = glm::translate(glm::vec3(-posLight->getLightPosition()));
-			glm::mat4x4 translateLightBack = glm::translate(glm::vec3(posLight->getLightPosition()));
-			std::cout << "translateLight: " << glm::to_string(translateLight) << std::endl;
-			posLight->setLightDirection(translateLightBack * rotMat * translateLight * glm::vec4(posLight->getLightDirection(), 1.0));
-			std::cout << "2: " << glm::to_string(posLight->getLightDirection()) << std::endl;
-			glm::vec3 lightDir = posLight->getLightDirection();
+		else {
+			ImGui::Text("Rotation:");
+			ImGui::SliderFloat("X##rotatelightX", &ligtRotX, -180.0f, 180.0f);
+			if (ImGui::IsItemActivated()) {
+				if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
+					tempLightDir = glm::vec4(posLight->getLightDirection(), 1.0);
+				}
+				if (DirectionalLight* dirLight = dynamic_cast<DirectionalLight*>(lightVector[selectedLight])) {
+					tempLightDir = glm::vec4(dirLight->getLightDirection(), 1.0);
+				}
+			}
+			if (ImGui::IsItemActive()) {
+				if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
+					glm::mat4x4 rotMat(1.0f);
+					rotMat = glm::rotate(glm::radians(ligtRotX), glm::vec3(1.0, 0.0, 0.0));
+
+					//std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
+					glm::mat4x4 translateLight = glm::translate(glm::vec3(-posLight->getLightPosition()));
+					glm::mat4x4 translateLightBack = glm::translate(glm::vec3(posLight->getLightPosition()));
+					posLight->setLightDirection(translateLightBack * rotMat * translateLight * tempLightDir);
+				}
+				if (DirectionalLight* dirLight = dynamic_cast<DirectionalLight*>(lightVector[selectedLight])) {
+					glm::mat4x4 rotMat(1.0f);
+					rotMat = glm::rotate(glm::radians(ligtRotX), glm::vec3(1.0, 0.0, 0.0));
+
+
+					//std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
+					glm::mat4x4 translateLight = glm::translate(glm::vec3(-dirLight->getLightPosition()));
+					glm::mat4x4 translateLightBack = glm::translate(glm::vec3(dirLight->getLightPosition()));
+					dirLight->setLightDirection(translateLightBack * rotMat * translateLight * tempLightDir);
+				}
+			}
+			else if (ImGui::IsItemDeactivated()) {
+				ligtRotX = 0.0f;
+			}
+
+			ImGui::SliderFloat("Y##rotatelightY", &ligtRotY, -180.0f, 180.0f);
+			if (ImGui::IsItemActivated()) {
+				if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
+					tempLightDir = glm::vec4(posLight->getLightDirection(), 1.0);
+				}
+				if (DirectionalLight* dirLight = dynamic_cast<DirectionalLight*>(lightVector[selectedLight])) {
+					tempLightDir = glm::vec4(dirLight->getLightDirection(), 1.0);
+				}
+			}
+			if (ImGui::IsItemActive()) {
+				if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
+					glm::mat4x4 rotMat(1.0f);
+					rotMat = glm::rotate(glm::radians(ligtRotY), glm::vec3(0.0, 1.0, 0.0));
+
+					//std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
+					glm::mat4x4 translateLight = glm::translate(glm::vec3(-posLight->getLightPosition()));
+					glm::mat4x4 translateLightBack = glm::translate(glm::vec3(posLight->getLightPosition()));
+					posLight->setLightDirection(translateLightBack * rotMat * translateLight * tempLightDir);
+				}
+				if (DirectionalLight* dirLight = dynamic_cast<DirectionalLight*>(lightVector[selectedLight])) {
+					glm::mat4x4 rotMat(1.0f);
+					rotMat = glm::rotate(glm::radians(ligtRotZ), glm::vec3(0.0, 0.0, 1.0));
+
+					//std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
+					glm::mat4x4 translateLight = glm::translate(glm::vec3(-dirLight->getLightPosition()));
+					glm::mat4x4 translateLightBack = glm::translate(glm::vec3(dirLight->getLightPosition()));
+					dirLight->setLightDirection(translateLightBack * rotMat * translateLight * tempLightDir);
+				}
+			}
+			else if (ImGui::IsItemDeactivated()) {
+				ligtRotY = 0.0f;
+			}
+			ImGui::SliderFloat("Z##rotatelightZ", &ligtRotZ, -180.0f, 180.0f);
+			if (ImGui::IsItemActivated()) {
+				if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
+					tempLightDir = glm::vec4(posLight->getLightDirection(), 1.0);
+				}
+				if (DirectionalLight* dirLight = dynamic_cast<DirectionalLight*>(lightVector[selectedLight])) {
+					tempLightDir = glm::vec4(dirLight->getLightDirection(), 1.0);
+				}
+			}
+			if (ImGui::IsItemActive()) {
+				if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
+					glm::mat4x4 rotMat(1.0f);
+					rotMat = glm::rotate(glm::radians(ligtRotZ), glm::vec3(0.0, 1.0, 0.0));
+
+					//std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
+					glm::mat4x4 translateLight = glm::translate(glm::vec3(-posLight->getLightPosition()));
+					glm::mat4x4 translateLightBack = glm::translate(glm::vec3(posLight->getLightPosition()));
+					posLight->setLightDirection(translateLightBack * rotMat * translateLight * tempLightDir);
+				}
+				if (DirectionalLight* dirLight = dynamic_cast<DirectionalLight*>(lightVector[selectedLight])) {
+					glm::mat4x4 rotMat(1.0f);
+					rotMat = glm::rotate(glm::radians(ligtRotZ), glm::vec3(0.0, 0.0, 1.0));
+
+					//std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
+					glm::mat4x4 translateLight = glm::translate(glm::vec3(-dirLight->getLightPosition()));
+					glm::mat4x4 translateLightBack = glm::translate(glm::vec3(dirLight->getLightPosition()));
+					dirLight->setLightDirection(translateLightBack * rotMat * translateLight * tempLightDir);
+				}
+			}
+			else if (ImGui::IsItemDeactivated()) {
+				ligtRotZ = 0.0f;
+			}
+
 		}
+		if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
+			ImGui::SliderFloat("Cutoff Angle", &posLight->cutoff, 0.0f, 89.99f);
+		}
+		ImGui::Text("Position:");
+		
+		ImGui::DragFloat("X##lightPosX", &lightVector[selectedLight]->lightPosition.x, 0.02f, -FLT_MAX, FLT_MAX, "%.04f");
+		ImGui::DragFloat("Y##lightPosY", &lightVector[selectedLight]->lightPosition.y, 0.02f, -FLT_MAX, FLT_MAX, "%.04f");
+		ImGui::DragFloat("Z##lightPosZ", &lightVector[selectedLight]->lightPosition.z, 0.02f, -FLT_MAX, FLT_MAX, "%.04f");
+		if (posLight1) {
+			ImGui::Text("Direction:");
 
+			ImGui::DragFloat("X##lightDirX", &posLight1->lightDirection.x, 0.02f, -FLT_MAX, FLT_MAX, "%.04f");
+			ImGui::DragFloat("Y##lightDirY", &posLight1->lightDirection.y, 0.02f, -FLT_MAX, FLT_MAX, "%.04f");
+			ImGui::DragFloat("Z##lightDirZ", &posLight1->lightDirection.z, 0.02f, -FLT_MAX, FLT_MAX, "%.04f");
+		}
+		if (dirLight1) {
+			ImGui::Text("Direction:");
 
-		//ImGui::Text("Translate:");
-
-		//ImGui::SliderFloat("X##translateX", &loadedObjs[selected]->translate.X, -180.0f, 180.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-		//ImGui::SliderFloat("Y##translateY", &loadedObjs[selected]->translate.Y, -180.0f, 180.0f);
-		//ImGui::SliderFloat("Z##translateZ", &loadedObjs[selected]->translate.Z, -180.0f, 180.0f);
-
+			ImGui::DragFloat("X##lightDirX", &dirLight1->lightDirection.x, 0.02f, -FLT_MAX, FLT_MAX, "%.04f");
+			ImGui::DragFloat("Y##lightDirY", &dirLight1->lightDirection.y, 0.02f, -FLT_MAX, FLT_MAX, "%.04f");
+			ImGui::DragFloat("Z##lightDirZ", &dirLight1->lightDirection.z, 0.02f, -FLT_MAX, FLT_MAX, "%.04f");
+		}
 
 	}
 
@@ -797,8 +931,6 @@ void glut_display_func()
 	//glDeleteBuffers(1, &skyboxVAO);
 	//----------
 
-
-
 	glColor3f(1.0, 0.0, 0.0);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -836,18 +968,6 @@ void glut_display_func()
 	}
 	glPopMatrix();*/
 	glDisable(GL_LIGHTING);
-
-
-
-
-	//glEnable(GL_LIGHTING);
-	//glPushMatrix();
-	//glLightfv(pointLight.getLightID(), GL_AMBIENT, glm::value_ptr(pointLight.getAmbientProperty()));
-	//glLightfv(pointLight.getLightID(), GL_DIFFUSE, glm::value_ptr(pointLight.getDiffusedProperty()));
-	//glLightfv(pointLight.getLightID(), GL_SPECULAR, glm::value_ptr(pointLight.getSpecularProperty()));
-	//glLightfv(pointLight.getLightID(), GL_POSITION, glm::value_ptr(pointLight.getLightPosition()));
-	//glEnable(pointLight.getLightID());
-	//glPopMatrix();
 
 	//Grid -------
 	GLfloat grid2x2[2][2][3] = {
@@ -895,7 +1015,7 @@ void glut_display_func()
 	glEvalMesh2(GL_LINE, 0, gridSize, 0, gridSize);
 
 	glPopMatrix();
-
+	glEnable(GL_LIGHTING);
 
 	// Grid ends-----
 
@@ -958,10 +1078,12 @@ void glut_display_func()
 				glBegin(GL_TRIANGLES);
 				//glNormal3i(currentMesh.Vertices[i].Normal.X, currentMesh.Vertices[i].Normal.Y, Loader.LoadedVertices[i].Normal.Z);
 				//std::cout << currentMesh.Indices[0] << " " << currentMesh.Vertices[i].Position.Y << " " << currentMesh.Vertices[i].Position.Z << std::endl;
-
-				glMaterialfv(GL_FRONT, GL_AMBIENT, &currentMesh.MeshMaterial.Ka.X);
-				glMaterialfv(GL_FRONT, GL_DIFFUSE, &currentMesh.MeshMaterial.Kd.X);
-				glMaterialfv(GL_FRONT, GL_SPECULAR, &currentMesh.MeshMaterial.Ks.X);
+				glm::vec3 Ka(currentMesh.MeshMaterial.Ka.X, currentMesh.MeshMaterial.Ka.Y, currentMesh.MeshMaterial.Ka.Z);
+				glm::vec3 Kd(currentMesh.MeshMaterial.Kd.X, currentMesh.MeshMaterial.Kd.Y, currentMesh.MeshMaterial.Kd.Z);
+				glm::vec3 Ks(currentMesh.MeshMaterial.Ks.X, currentMesh.MeshMaterial.Ks.Y, currentMesh.MeshMaterial.Ks.Z);
+				glMaterialfv(GL_FRONT, GL_AMBIENT, glm::value_ptr(Ka));
+				glMaterialfv(GL_FRONT, GL_DIFFUSE, glm::value_ptr(Kd));
+				glMaterialfv(GL_FRONT, GL_SPECULAR, glm::value_ptr(Ks));
 				glMateriali(GL_FRONT, GL_SHININESS, currentMesh.MeshMaterial.Ns);
 				glTexCoord2f(currentMesh.Vertices[currentMesh.Indices[j]].TextureCoordinate.X, currentMesh.Vertices[currentMesh.Indices[j]].TextureCoordinate.Y);
 				glNormal3f(currentMesh.Vertices[currentMesh.Indices[j]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Z);
@@ -982,10 +1104,57 @@ void glut_display_func()
 		glPopMatrix();
 
 	}
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+	//glLineWidth(2);
+	if (selectedLight > -1) {
+		glPushMatrix();
+		for (int i = 0; i < lightVector.size(); i++) {
+			createLight(lightVector[i]);
+		}
+		glColor4f(0.5, 0.6, 1, 1);
+		if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
+			//std::cout << pointLight->getLightDirection().x << " " << pointLight->getLightDirection().y << " " << pointLight->getLightDirection().z << std::endl;
+			glBegin(GL_LINES);
+			glVertex4fv(glm::value_ptr(glm::vec4(posLight->getLightDirection(), 1.0f)));
+			glVertex4fv(glm::value_ptr(posLight->getLightPosition()));
+			glEnd();
+			glm::vec3 temp = glm::abs(glm::vec3(posLight->getLightPosition()) - posLight->getLightDirection());
+			float distance = sqrt(temp.x * temp.x + temp.y * temp.y + temp.z * temp.z);
+			float radius = glm::tan(glm::radians(posLight->getCutoff())) * distance;
+			drawCircle(posLight->getLightDirection().x, posLight->getLightDirection().y, posLight->getLightDirection().z, radius, 10);
+			//posLight->setLightDirection(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		}
+		else if (DirectionalLight* dirLight = dynamic_cast<DirectionalLight*>(lightVector[selectedLight])) {
+			//std::cout << pointLight->getLightDirection().x << " " << pointLight->getLightDirection().y << " " << pointLight->getLightDirection().z << std::endl;
+			glBegin(GL_LINES);
+			glVertex4fv(glm::value_ptr(glm::vec4(dirLight->getLightDirection(), 1.0f)));
+			glVertex4fv(glm::value_ptr(dirLight->getLightPosition()));
+			glEnd();
+			glPointSize(5);
+			glColor4f(0.9, 0.7, 0.1, 1);
+			glBegin(GL_POINTS);
 
+			glVertex4fv(glm::value_ptr(glm::vec4(dirLight->getLightDirection(), 1.0f)));
+			glEnd();
+			//dirLight->setLightDirection(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		}
+		else if (PointLight* pointLight = dynamic_cast<PointLight*>(lightVector[selectedLight])) {
+			glColor4f(0.9, 0.7, 0.1, 1);
+			glBegin(GL_POINTS);
+			glVertex3fv(glm::value_ptr(pointLight->getLightPosition()));
+			glEnd();
+			glBegin(GL_LINES);
+			glVertex3fv(glm::value_ptr(pointLight->getLightPosition()));
+			float x = pointLight->getLightPosition().x;
+			float z = pointLight->getLightPosition().z;
+			glVertex3f(x,0,z);
+			glEnd();
+		}
 
-
-
+		glPopMatrix();
+	}
+	//glLineWidth(1);
 
 	ImGui_ImplOpenGL2_NewFrame();
 	ImGui_ImplGLUT_NewFrame();
@@ -997,24 +1166,7 @@ void glut_display_func()
 
 	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 
-	glColor4f(1, 0, 0, 1);
-	glPointSize(20);
-	glPushMatrix();
-	for (int i = 0; i < lightVector.size(); i++) {
-		createLight(lightVector[i]);
 
-		if (PositionalLight* pointLight = dynamic_cast<PositionalLight*>(lightVector[i])) {
-			//std::cout << pointLight->getLightDirection().x << " " << pointLight->getLightDirection().y << " " << pointLight->getLightDirection().z << std::endl;
-			glBegin(GL_LINES);
-			glVertex4fv(glm::value_ptr(glm::vec4(pointLight->getLightDirection(), 1.0f)));
-			glVertex4fv(glm::value_ptr(pointLight->getLightPosition()));
-			glEnd();
-			pointLight->setLightDirection(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-		}
-
-
-	}
-	glPopMatrix();
 
 	glFlush();
 	glutSwapBuffers();
@@ -1024,38 +1176,6 @@ void glut_display_func()
 
 void addToScene(std::vector<objl::Loader*>& loadedObjs, const char* path) {
 	std::string tempString(path);
-
-	//int counter = 0;
-	//bool objNameFound = true;
-	//while (objNameFound) {
-	//    for (int i = 0; i < loadedObjs.size(); i++) {
-
-	//        if (!loadedObjs[i]->objectName.compare(path)) {
-	//            if (counter != 0) {
-	//                tempString.append(std::to_string(counter));
-	//                counter++;
-	//            }
-	//        }
-	//        else {
-	//            objNameFound = false;
-	//        }
-
-	//    }
-	//}
-
-	// int counter = 0; 
-	/*
-		for(int . ...) {
-			if(load...compare(path)) {
-				loadedObjs->counter+=1
-
-			}
-		}
-	*/
-
-	/*  if(counter!=0) {
-		  tempString.append(std::to_string(counter));
-	  }*/
 	for (int i = 0; i < loadedObjs.size(); i++) {
 		if (!loadedObjs[i]->objectName.compare(path)) {
 			loadedObjs[i]->counter += 1;

@@ -4,21 +4,25 @@
 #include <string>
 
 class Light {
-private:
+public:
 	unsigned int lightID;
 	glm::vec4 ambientProperty;
 	glm::vec4 diffuseProperty;
-public:
-
+	glm::vec4 lightPosition;
+	bool visible;
 	Light() {
 		lightID = 0x4000;
 		ambientProperty = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
 		diffuseProperty = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
+		lightPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		visible = true;
 	}
 	Light(unsigned int lightID) {
 		this->lightID  = lightID;
 		ambientProperty = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
 		diffuseProperty = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
+		lightPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		visible = true;
 	}
 
 	virtual glm::vec4 getLightPosition() = 0;
@@ -54,13 +58,9 @@ public:
 
 class PointLight : public Light {
 
-private:
-
-	//Components of Light
-	glm::vec4 specularProperty;
-	glm::vec4 lightPosition;
-
 public:
+	glm::vec4 specularProperty;
+	
 	// Class Constructor
 	PointLight() {
 		specularProperty = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -95,15 +95,10 @@ public:
 };
 
 class DirectionalLight : public Light {
-
-private:
-	glm::vec4 lightPosition;
+public:
+	//glm::vec4 lightPosition;
 	glm::vec3 lightDirection;
 	glm::vec4 specularProperty;
-
-
-public:
-
 	DirectionalLight(unsigned int lightID)
 		: Light(lightID) {
 		lightDirection = glm::vec4(0.0f, 0.0f, -10.0f, 1.0f);
@@ -139,18 +134,15 @@ public:
 
 class PositionalLight : public Light {
 
-private:
+public:
 	glm::vec3 lightDirection;
-	float cutoff;
-	unsigned int exponent;
 	glm::vec3 spotDirection;
 	glm::vec4 specularProperty;
-	glm::vec4 lightPosition;
+	//glm::vec4 lightPosition;
+	float cutoff;
+	unsigned int exponent;
 	float attenuationCoeff;
 	unsigned int attenuationType;
-
-public:
-
 	PositionalLight(unsigned int lightID)
 		: Light(lightID) {
 		cutoff = 45.0f;
