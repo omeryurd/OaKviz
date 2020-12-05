@@ -64,7 +64,7 @@ public:
 	// Class Constructor
 	PointLight() {
 		specularProperty = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-		lightPosition = glm::vec4(0.0f, 10.0f, 0.0f, 1.0f);
+		lightPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	}
 
 	PointLight(unsigned int lightID) :
@@ -90,18 +90,16 @@ public:
 		this->specularProperty = diffuseProperty;
 	}
 
-
-
 };
 
 class DirectionalLight : public Light {
 public:
-	//glm::vec4 lightPosition;
+
 	glm::vec3 lightDirection;
 	glm::vec4 specularProperty;
 	DirectionalLight(unsigned int lightID)
 		: Light(lightID) {
-		lightDirection = glm::vec4(0.0f, 0.0f, -10.0f, 1.0f);
+		lightDirection = glm::vec4(0.0f, -10.0f, 0.0f, 1.0f);
 		specularProperty = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		setLightPosition(glm::vec4(0.0f, 10.0f, 0.0f, 0.0f));
 	}
@@ -135,16 +133,19 @@ public:
 class PositionalLight : public Light {
 
 public:
+
 	glm::vec3 lightDirection;
 	glm::vec3 spotDirection;
 	glm::vec4 specularProperty;
-	//glm::vec4 lightPosition;
+	
 	float cutoff;
 	unsigned int exponent;
 	float attenuationCoeff;
 	unsigned int attenuationType;
+
 	PositionalLight(unsigned int lightID)
 		: Light(lightID) {
+
 		cutoff = 45.0f;
 		exponent = 0.0f;
 		spotDirection = glm::vec3(0.0f, 0.0f, -10.0f);
@@ -153,7 +154,9 @@ public:
 		attenuationType = 0x1207;
 		lightDirection = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		setLightPosition(glm::vec4(0.0f, 0.0f, -10.0f, 1.0f));
+
 	}
+
 	~PositionalLight() {
 
 	}
@@ -162,7 +165,7 @@ public:
 	//GL_QUADRATIC_ATTENUATION 0x1209
 
 
-	   //getters
+	 //getters
 	unsigned int getAttenutationType() {
 		return attenuationType;
 	}

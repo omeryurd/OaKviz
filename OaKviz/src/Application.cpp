@@ -4,12 +4,6 @@
 // !!! GLUT/FreeGLUT IS OBSOLETE SOFTWARE. Using GLUT is not recommended unless you really miss the 90's. !!!
 // !!! If someone or something is teaching you GLUT in 2020, you are being abused. Please show some resistance. !!!
 // !!! Nowadays, prefer using GLFW or SDL instead!
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_glut.h"
-#include "imgui/imgui_impl_opengl2.h"
-#include "FileBrowser/Dirent/dirent.h"
-#include "FileBrowser/ImGuiFileBrowser.h"
-#include "OBJLoader/OBJ_Loader.h"
 #include "glm/vec3.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/transform.hpp"
@@ -19,18 +13,13 @@
 #include "glm/glm.hpp"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
-#include <iostream>
-#include <fstream>
 #include "glm/gtx/string_cast.hpp"
 #include "glm/ext.hpp"
-#include <stdio.h>
-#include <string>
-#include <math.h>
-#define M_PI       3.14159265358979323846
 #include "Application.h"
 #include "core/Camera.h"
 #include "core/shader.h"
 #include "core/Light.h"
+
 extern Camera m_camera;
 
 #include <GL/glew.h>
@@ -46,13 +35,18 @@ extern Camera m_camera;
 #endif
 #define FREEGLUT
 
+#define M_PI 3.14159265358979323846
+#define LIGHT_ID 0x4000
+#define ATTEN_TYPE 0x1207
+
 //void mouse_callback_func(int button, int state, int x, int y);
 // Our state
 extern "C" bool loadTexture(std::string path, objl::Loader * &objectModel);
 void deleteTexture(objl::Loader*& objectModel);
 void drawCircle(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLint numberOfSides);
 static bool show_demo_window = true;
-static bool show_another_window = false;
+static bool show_lighting_window = false;
+static bool show_material_window = false;
 static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 static ImVec4 clear_color2 = ImVec4(0.35f, 0.45f, 0.60f, 1.00f);
 objl::Loader Loader;
@@ -172,18 +166,20 @@ int main(int argc, char** argv)
 	PositionalLight* poLight;
 	poLight = new PositionalLight(GL_LIGHT2);*/
 
-	lightVector.push_back(new PointLight(GL_LIGHT0));
+	/*lightVector.push_back(new PointLight(GL_LIGHT0));
 	lightVector.push_back(new DirectionalLight(GL_LIGHT1));
 	lightVector.push_back(new PositionalLight(GL_LIGHT2));
+	lightVector.push_back(new PointLight(GL_LIGHT3));
+	lightVector.push_back(new DirectionalLight(GL_LIGHT4));
+	lightVector.push_back(new PositionalLight(GL_LIGHT5));
+	lightVector.push_back(new PointLight(GL_LIGHT6));
+	lightVector.push_back(new DirectionalLight(GL_LIGHT7));*/
 
 	glutDisplayFunc(glut_display_func);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	//addToScene(loadedObjs, "lightObj3.obj");
+
 	glutDisplayFunc(glut_display_func);
-	//glutKeyboardFunc(glut_keyboard_func);
-	//glutMouseFunc(mouse_callback_func);
-	//glRotatef(30, 1, 1.0, 0.0);
 
 
 	// Setup GLUT display function
@@ -199,7 +195,7 @@ int main(int argc, char** argv)
 
 	// Setup Dear ImGui style
 	//ImGui::StyleColorsDark();
-	ImGui::StyleColorsClassic();
+	ImGui::StyleColorsDark();
 
 	// Setup Platform/Renderer bindings
 	ImGui_ImplGLUT_Init();
@@ -220,9 +216,8 @@ int main(int argc, char** argv)
 	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
 	//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 	//IM_ASSERT(font != NULL);
+
 	glutMainLoop();
-
-
 
 	// Cleanup
 	ImGui_ImplOpenGL2_Shutdown();
@@ -260,15 +255,12 @@ void drawCircle(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLint numberOfS
 
 	GLfloat doublePi = 2.0f * M_PI;
 
-	GLfloat *circleVerticesX;
-	GLfloat *circleVerticesY;
-	GLfloat *circleVerticesZ;
+	GLfloat* circleVerticesX;
+	GLfloat* circleVerticesY;
+	GLfloat* circleVerticesZ;
 	circleVerticesX = new GLfloat[numberOfVertices];
 	circleVerticesY = new GLfloat[numberOfVertices];
 	circleVerticesZ = new GLfloat[numberOfVertices];
-	//circleVerticesX[0] = x;
-	//circleVerticesY[0] = y;
-	//circleVerticesZ[0] = z;
 
 	for (int i = 0; i < numberOfVertices; i++)
 	{
@@ -295,8 +287,7 @@ void drawCircle(GLfloat x, GLfloat y, GLfloat z, GLfloat radius, GLint numberOfS
 
 
 void init_other() {
-	/* if(hasTexture)
-	 loadTexture("Cottage_Dirt_Base_Color.png");*/
+
 	glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 	glShadeModel(GL_SMOOTH);
 	//glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_light);
@@ -304,19 +295,12 @@ void init_other() {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glEnable(GL_RESCALE_NORMAL);
-	//glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light);
-	//glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light);
-	//glLightfv(GL_LIGHT0, GL_SPECULAR, specular_light);
-	//glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-	//glEnable(GL_LIGHT0);
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_DEPTH_TEST);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45, (16.0 / 9.0), 0.1, 150);
-	//gluLookAt(0, 0.0 ,5, 0, 0, 0, 0, 1, 0);
-	//glFrustum(-5.0, 5.0, -5.0, 5.0, 0.1, 5.0);
 
 }
 
@@ -404,7 +388,7 @@ unsigned int loadCubemap(std::vector<std::string> faces)
 
 
 void createLight(Light* light) {
-	
+
 	if (PointLight* pointLight = dynamic_cast<PointLight*>(light)) {
 		glLightfv(pointLight->getLightID(), GL_AMBIENT, glm::value_ptr(pointLight->getAmbientProperty()));
 		glLightfv(pointLight->getLightID(), GL_DIFFUSE, glm::value_ptr(pointLight->getDiffusedProperty()));
@@ -412,7 +396,8 @@ void createLight(Light* light) {
 		glLightfv(pointLight->getLightID(), GL_POSITION, glm::value_ptr(pointLight->getLightPosition()));
 		if (pointLight->visible) {
 			glEnable(pointLight->getLightID());
-		} else
+		}
+		else
 			glDisable(pointLight->getLightID());
 	}
 	else if (DirectionalLight* dirLight = dynamic_cast<DirectionalLight*>(light)) {
@@ -443,7 +428,7 @@ void createLight(Light* light) {
 			glDisable(posLight->getLightID());
 	}
 
-	
+
 }
 
 
@@ -621,7 +606,7 @@ void my_display_code()
 	}
 	if (selected >= 0) {
 		bool objectExists = true;
-	
+
 		if (!loadedObjs.empty()) {
 
 			ImGui::Text("Rotation:");
@@ -722,7 +707,6 @@ void my_display_code()
 		DirectionalLight* dirLight1 = dynamic_cast<DirectionalLight*>(lightVector[selectedLight]);
 		ImGui::Checkbox("Visible", &lightVector[selectedLight]->visible);
 		if (PointLight* pointLight = dynamic_cast<PointLight*>(lightVector[selectedLight])) {
-
 		}
 		else {
 			ImGui::Text("Rotation:");
@@ -830,7 +814,7 @@ void my_display_code()
 			ImGui::SliderFloat("Cutoff Angle", &posLight->cutoff, 0.0f, 89.99f);
 		}
 		ImGui::Text("Position:");
-		
+
 		ImGui::DragFloat("X##lightPosX", &lightVector[selectedLight]->lightPosition.x, 0.02f, -FLT_MAX, FLT_MAX, "%.04f");
 		ImGui::DragFloat("Y##lightPosY", &lightVector[selectedLight]->lightPosition.y, 0.02f, -FLT_MAX, FLT_MAX, "%.04f");
 		ImGui::DragFloat("Z##lightPosZ", &lightVector[selectedLight]->lightPosition.z, 0.02f, -FLT_MAX, FLT_MAX, "%.04f");
@@ -851,6 +835,217 @@ void my_display_code()
 
 	}
 
+	//
+
+	ImGui::Checkbox("Create Light", &show_lighting_window);
+
+	// TODO : Reset Button Function for All the Lights
+	if (show_lighting_window)
+	{
+		static int radButtonToggled = 0;
+		ImGui::Begin("Light Creation Window", &show_lighting_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+		ImGui::RadioButton("Point Light", &radButtonToggled, 0); ImGui::SameLine();
+		ImGui::RadioButton("Directional Light", &radButtonToggled, 1); ImGui::SameLine();
+		ImGui::RadioButton("Positional Light", &radButtonToggled, 2);
+
+		if (radButtonToggled == 0) {
+			static glm::vec4 pointAmbientColor = glm::vec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
+			static glm::vec4 pointDiffuseColor = glm::vec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
+			static glm::vec4 pointSpecularColor = glm::vec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
+			static glm::vec4 pointLightPos = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+			ImGui::Text("Point Light - Ambient Property");
+			ImGui::ColorEdit4("Color##2f", (float*)&pointAmbientColor, ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Point Light - Diffuse Property");
+			ImGui::ColorEdit4("Color##3f", (float*)&pointDiffuseColor, ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Point Light - Specular Property");
+			ImGui::ColorEdit4("Color##4f", (float*)&pointSpecularColor, ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Point Light - Position");
+			ImGui::DragFloat("Position: X", &pointLightPos.x, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::DragFloat("Position: Y", &pointLightPos.y, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::DragFloat("Position: Z", &pointLightPos.z, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+
+			if (ImGui::Button("Create Point Light")) {
+
+				ImGui::OpenPopup("Maximum Lights Warning!");
+
+				if (lightVector.size() == 8) {
+
+					if (ImGui::BeginPopupModal("Maximum Lights Warning!", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+						ImGui::Text("There are already 8 lights within the scene.\nNo Additional Lights can be added.\n\n");
+						ImGui::Separator();
+
+						ImGui::SetItemDefaultFocus();
+						if (ImGui::Button("Close Message", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+						ImGui::EndPopup();
+					}
+				}
+				else {
+					PointLight* newLight = new PointLight(LIGHT_ID + lightVector.size());
+					newLight->setAmbientProperty(pointAmbientColor);
+					newLight->setDiffuseProperty(pointDiffuseColor);
+					newLight->setSpecularProperty(pointSpecularColor);
+					newLight->setLightPosition(pointLightPos);
+					lightVector.push_back(newLight);
+				}
+			}
+
+		}
+		else if (radButtonToggled == 1) {
+
+			static glm::vec4 directionalAmbientColor = glm::vec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
+			static glm::vec4 directionalDiffuseColor = glm::vec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
+			static glm::vec4 directionalSpecularColor = glm::vec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
+			static glm::vec4 directionalLightDir = glm::vec4(0.0f, -10.0f, 0.0f, 1.0f);
+			static glm::vec4 directionalLightPos = glm::vec4(0.0f, 10.0f, 0.0f, 1.0f);
+
+			ImGui::Text("Directional Light - Ambient Property");
+			ImGui::ColorEdit4("Color##5f", (float*)&directionalAmbientColor, ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Directional Light - Diffuse Property");
+			ImGui::ColorEdit4("Color##6f", (float*)&directionalDiffuseColor, ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Directional Light - Specular Property");
+			ImGui::ColorEdit4("Color##7f", (float*)&directionalSpecularColor, ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Directional Light - Direction");
+			ImGui::DragFloat("Direction: X", &directionalLightDir.x, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::DragFloat("Direction: Y", &directionalLightDir.y, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::DragFloat("Direction: Z", &directionalLightDir.z, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+
+			ImGui::Text("Directional Light - Position");
+			ImGui::DragFloat("Position: X", &directionalLightPos.x, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::DragFloat("Position: Y", &directionalLightPos.y, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::DragFloat("Position: Z", &directionalLightPos.z, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+
+			if (ImGui::Button("Create Directional Light")) {
+
+				ImGui::OpenPopup("Maximum Lights Warning!");
+
+				if (lightVector.size() == 8) {
+
+					if (ImGui::BeginPopupModal("Maximum Lights Warning!", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+						ImGui::Text("There are already 8 lights within the scene.\nNo Additional Lights can be added.\n\n");
+						ImGui::Separator();
+
+						ImGui::SetItemDefaultFocus();
+						if (ImGui::Button("Close Message", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+						ImGui::EndPopup();
+					}
+				}
+				else {
+					DirectionalLight* newLight = new DirectionalLight(LIGHT_ID + lightVector.size());
+					newLight->setAmbientProperty(directionalAmbientColor);
+					newLight->setDiffuseProperty(directionalDiffuseColor);
+					newLight->setSpecularProperty(directionalSpecularColor);
+					newLight->setLightDirection(directionalLightDir);
+					newLight->setLightPosition(directionalLightPos);
+					lightVector.push_back(newLight);
+				}
+			}
+
+		}
+		else if (radButtonToggled == 2) {
+
+			static glm::vec4 positionalAmbientColor = glm::vec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
+			static glm::vec4 positionalDiffuseColor = glm::vec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
+			static glm::vec4 positionalSpecularColor = glm::vec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
+			static glm::vec4 positionalLightDir = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			static glm::vec4 positionalLightPos = glm::vec4(0.0f, 0.0f, -10.0f, 1.0f);
+			static float spotCutoff = 45.0f;
+			static int spotExponent = 0.0f;
+			static float attenCoef = 1.0f;
+			static int currentAttenType = 0;
+			static const char* attenTypes[3] = { "CONSTANT", "LINEAR", "QUADRATIC" };
+
+			ImGui::Text("Positional Light - Ambient Property");
+			ImGui::ColorEdit4("Color##8f", (float*)&positionalAmbientColor, ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Positional Light - Diffuse Property");
+			ImGui::ColorEdit4("Color##9f", (float*)&positionalDiffuseColor, ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Positional Light - Specular Property");
+			ImGui::ColorEdit4("Color##10f", (float*)&positionalSpecularColor, ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Positional Light - Direction");
+			ImGui::DragFloat("Direction - X", &positionalLightDir.x, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::DragFloat("Direction - Y", &positionalLightDir.y, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::DragFloat("Direction - Z", &positionalLightDir.z, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+
+			ImGui::Text("Positional Light - Position");
+			ImGui::DragFloat("Position - X", &positionalLightPos.x, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::DragFloat("Position - Y", &positionalLightPos.y, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::DragFloat("Position - Z", &positionalLightPos.z, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+
+			ImGui::Text("Positional Light - Spot Exponent");
+			ImGui::SliderInt("Exponent", &spotExponent, 0, 128, "%d");
+
+			ImGui::Text("Positional Light - Spot Cutoff Angle");
+			ImGui::SliderFloat("Cutoff", &spotCutoff, 0.0f, 89.99f, "%0.2f");
+
+			ImGui::Text("Positional Light - Attenuation Type");
+			static int item_current_3 = -1; // If the selection isn't within 0..count, Combo won't display a preview
+			ImGui::Combo("Type", &currentAttenType, attenTypes, IM_ARRAYSIZE(attenTypes));
+
+			// TODO: What is the Max Attenuation Coefficient?
+			ImGui::Text("Positional Light - Attenuation Coefficient");
+			ImGui::SliderFloat("Coefficient", &attenCoef, 1.0f, 60.0f, "%f");
+
+
+			if (ImGui::Button("Create Positional Light")) {
+
+				ImGui::OpenPopup("Maximum Lights Warning!");
+
+				if (lightVector.size() == 8) {
+
+					if (ImGui::BeginPopupModal("Maximum Lights Warning!", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+						ImGui::Text("There are already 8 lights within the scene.\nNo Additional Lights can be added.\n\n");
+						ImGui::Separator();
+
+						ImGui::SetItemDefaultFocus();
+						if (ImGui::Button("Close Message", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+						ImGui::EndPopup();
+					}
+				}
+				else {
+					PositionalLight* newLight = new PositionalLight(LIGHT_ID + lightVector.size());
+					newLight->setAmbientProperty(positionalAmbientColor);
+					newLight->setDiffuseProperty(positionalDiffuseColor);
+					newLight->setSpecularProperty(positionalSpecularColor);
+					newLight->setLightDirection(positionalLightDir);
+					newLight->setLightPosition(positionalLightPos);
+					newLight->setCutoff(spotCutoff);
+					newLight->setExponent(spotExponent);
+					newLight->setattenuationCoeff(attenCoef);
+
+					if (currentAttenType == 0) {
+						newLight->setAttenutationType(ATTEN_TYPE);
+					}
+					else if (currentAttenType == 1) {
+						newLight->setAttenutationType(ATTEN_TYPE + 1);
+					}
+					else if (currentAttenType == 2) {
+						newLight->setAttenutationType(ATTEN_TYPE + 2);
+					}
+
+					lightVector.push_back(newLight);
+				}
+
+			}
+
+		}
+
+		ImGui::End();
+	}
+
+	//Material Editing Window
+
+
+
+
 
 	ImGui::End();
 
@@ -859,46 +1054,7 @@ void my_display_code()
 		ImGui::ShowDemoWindow(&show_demo_window);
 
 
-
-	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-	{
-		/*static float x = 0.0f;
-		static float y = 0.0f;
-		static float z = 0.0f;*/
-		static int counter = 0;
-
-		ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-		ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-		ImGui::Checkbox("Another Window", &show_another_window);
-		ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-		ImGui::ColorEdit3("disffuse color", (float*)&clear_color2);
-		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-			counter++;
-		ImGui::SameLine();
-		ImGui::Text("counter = %d", counter);
-
-		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		ImGui::End();
-	}
-	//ImGui::Begin("aa", NULL);
 	showMainMenu();
-	//ImGui::End();
-	// 3. Show another simple window.
-	if (show_another_window)
-	{
-		ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-		ImGui::Text("Hello from another window!");
-		if (ImGui::Button("Close Me"))
-			show_another_window = false;
-		ImGui::End();
-	}
-
-
-
-
-
 }
 
 void glut_display_func()
@@ -1041,8 +1197,6 @@ void glut_display_func()
 		// In GLM the angle must be in degrees here, so convert it.
 		MyQuaternion = glm::angleAxis(glm::radians(loadedObjs[l]->rotate.Y), glm::vec3(0.0f, 1.0f, 0.0f));
 
-
-
 		glm::mat4 RotationMatrix = glm::toMat4(MyQuaternion);
 
 		float dArray[16] = { 0.0 };
@@ -1064,7 +1218,6 @@ void glut_display_func()
 		else {
 			glDisable(GL_TEXTURE_2D);
 		}
-
 
 		for (int i = 0; i < loadedObjs[l]->LoadedMeshes.size(); i++) {
 			objl::Mesh currentMesh = loadedObjs[l]->LoadedMeshes[i];
@@ -1141,6 +1294,7 @@ void glut_display_func()
 		}
 		else if (PointLight* pointLight = dynamic_cast<PointLight*>(lightVector[selectedLight])) {
 			glColor4f(0.9, 0.7, 0.1, 1);
+			glPointSize(20);
 			glBegin(GL_POINTS);
 			glVertex3fv(glm::value_ptr(pointLight->getLightPosition()));
 			glEnd();
@@ -1148,7 +1302,7 @@ void glut_display_func()
 			glVertex3fv(glm::value_ptr(pointLight->getLightPosition()));
 			float x = pointLight->getLightPosition().x;
 			float z = pointLight->getLightPosition().z;
-			glVertex3f(x,0,z);
+			glVertex3f(x, 0, z);
 			glEnd();
 		}
 

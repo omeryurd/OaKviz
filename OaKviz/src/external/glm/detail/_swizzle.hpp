@@ -1,4 +1,5 @@
 #pragma once
+#include <glm\detail\qualifier.hpp>
 
 namespace glm{
 namespace detail

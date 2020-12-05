@@ -597,6 +597,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>D:\College\Purdue\KB\Junior Semester 1\CS 321\Projects\final_project\OaKviz\OaKviz\src\external\FileBrowser;D:\College\Purdue\KB\Junior Semester 1\CS 321\Projects\final_project\OaKviz\OaKviz\src\external\glm;D:\College\Purdue\KB\Junior Semester 1\CS 321\Projects\final_project\OaKviz\OaKviz\src\external\imgui;D:\College\Purdue\KB\Junior Semester 1\CS 321\Projects\final_project\OaKviz\OaKviz\src\external\OBJLoader;D:\College\Purdue\KB\Junior Semester 1\CS 321\Projects\final_project\OaKviz\OaKviz\src\external\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
