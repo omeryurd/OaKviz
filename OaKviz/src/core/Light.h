@@ -4,12 +4,14 @@
 #include <string>
 
 class Light {
+
 public:
 	unsigned int lightID;
 	glm::vec4 ambientProperty;
 	glm::vec4 diffuseProperty;
 	glm::vec4 lightPosition;
 	bool visible;
+
 	Light() {
 		lightID = 0x4000;
 		ambientProperty = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
@@ -34,6 +36,11 @@ public:
 	glm::vec4 getDiffusedProperty() {
 		return this->diffuseProperty;
 	}
+
+	void setLightID(unsigned int light_id) {
+		this->lightID = light_id;
+	}
+
 	unsigned int getLightID() {
 		return lightID;
 	}
@@ -45,14 +52,6 @@ public:
 		this->diffuseProperty = diffuseProperty;
 	}
 
-
-};
-
-class globalLight : public Light {
-private:
-
-
-public:
 
 };
 
@@ -86,8 +85,8 @@ public:
 	void setLightPosition(glm::vec4 lightPosition) {
 		this->lightPosition = lightPosition;
 	}
-	void setSpecularProperty(glm::vec4 diffuseProperty) {
-		this->specularProperty = diffuseProperty;
+	void setSpecularProperty(glm::vec4 specularProperty) {
+		this->specularProperty = specularProperty;
 	}
 
 };
@@ -97,9 +96,10 @@ public:
 
 	glm::vec3 lightDirection;
 	glm::vec4 specularProperty;
+
 	DirectionalLight(unsigned int lightID)
 		: Light(lightID) {
-		lightDirection = glm::vec4(0.0f, -10.0f, 0.0f, 1.0f);
+		lightDirection = glm::vec3(0.0f, -10.0f, 0.0f);
 		specularProperty = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		setLightPosition(glm::vec4(0.0f, 10.0f, 0.0f, 0.0f));
 	}
@@ -121,11 +121,11 @@ public:
 		this->lightPosition = lightPosition;
 	}
 
-	void setLightDirection(glm::vec4 direction) {
+	void setLightDirection(glm::vec3 direction) {
 		lightDirection = direction;
 	}
-	void setSpecularProperty(glm::vec4 diffuseProperty) {
-		this->specularProperty = diffuseProperty;
+	void setSpecularProperty(glm::vec4 specularProperty) {
+		this->specularProperty = specularProperty;
 	}
 
 };
@@ -135,7 +135,6 @@ class PositionalLight : public Light {
 public:
 
 	glm::vec3 lightDirection;
-	glm::vec3 spotDirection;
 	glm::vec4 specularProperty;
 	
 	float cutoff;
@@ -148,11 +147,11 @@ public:
 
 		cutoff = 45.0f;
 		exponent = 0.0f;
-		spotDirection = glm::vec3(0.0f, 0.0f, -10.0f);
+		//spotDirection = glm::vec3(0.0f, 0.0f, -10.0f);
 		specularProperty = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		attenuationCoeff = 1;
 		attenuationType = 0x1207;
-		lightDirection = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		lightDirection = glm::vec3(0.0f, 0.0f, 0.0f);
 		setLightPosition(glm::vec4(0.0f, 0.0f, -10.0f, 1.0f));
 
 	}
@@ -201,11 +200,11 @@ public:
 	void setCutoff(float cutoff) {
 		this->cutoff = cutoff;
 	}
-	void setLightDirection(glm::vec4 direction) {
-		lightDirection = direction;
+	void setLightDirection(glm::vec3 direction) {
+		this->lightDirection = direction;
 	}
-	void setSpecularProperty(glm::vec4 diffuseProperty) {
-		this->specularProperty = diffuseProperty;
+	void setSpecularProperty(glm::vec4 specularProperty) {
+		this->specularProperty = specularProperty;
 	}
 	void setLightPosition(glm::vec4 lightPosition) {
 		this->lightPosition = lightPosition;

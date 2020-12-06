@@ -154,9 +154,9 @@ int main(int argc, char** argv)
 	//glGenVertexArrays(1, &skyboxVAO);
 	//glGenBuffers(1, &skyboxVBO);
 	//glBindVertexArray(skyboxVAO);
-	//glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+	//glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);	//glEnable
 	//glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-	//glEnableVertexAttribArray(0);
+	// VertexAttribArray(0);
 	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	//-----
    /* PointLight *pLight;
@@ -168,7 +168,6 @@ int main(int argc, char** argv)
 
 	/*lightVector.push_back(new PointLight(GL_LIGHT0));
 	lightVector.push_back(new DirectionalLight(GL_LIGHT1));
-	lightVector.push_back(new PositionalLight(GL_LIGHT2));
 	lightVector.push_back(new PointLight(GL_LIGHT3));
 	lightVector.push_back(new DirectionalLight(GL_LIGHT4));
 	lightVector.push_back(new PositionalLight(GL_LIGHT5));
@@ -290,7 +289,11 @@ void init_other() {
 
 	glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 	glShadeModel(GL_SMOOTH);
-	//glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_light);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_light);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(45, (16.0 / 9.0), 0.1, 150);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -298,9 +301,6 @@ void init_other() {
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_DEPTH_TEST);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(45, (16.0 / 9.0), 0.1, 150);
 
 }
 
@@ -555,6 +555,7 @@ void deleteObjPopUp(std::vector<objl::Loader*>& objects, unsigned int index) {
 	}
 }
 glm::vec4 tempLightDir(1.0f);
+
 void my_display_code()
 {
 	static imgui_addons::ImGuiFileBrowser file_dialog2;
@@ -567,7 +568,8 @@ void my_display_code()
 	//--------------------------------
 
 	int selectedIndex = 0;
-	ImGui::Begin("New Window!");
+
+	ImGui::Begin("OaKviz Editing Panel");
 	//ImGui::TextColored(ImVec4(0.753, 0.753, 0.753, 1.0f), "Loaded Objects:");
 	if (ImGui::CollapsingHeader("Loaded Objects", ImGuiTreeNodeFlags_None)) {
 		for (int n = 0; n < loadedObjs.size(); n++)
@@ -625,6 +627,8 @@ void my_display_code()
 			ImGui::SliderFloat("X##translateX", &loadedObjs[selected]->translate.X, -180.0f, 180.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 			ImGui::SliderFloat("Y##translateY", &loadedObjs[selected]->translate.Y, -180.0f, 180.0f);
 			ImGui::SliderFloat("Z##translateZ", &loadedObjs[selected]->translate.Z, -180.0f, 180.0f);
+
+
 			if (!loadedObjs.empty()) {
 				// Delete an Object
 				if (ImGui::Button("Delete Object.."))
@@ -662,6 +666,7 @@ void my_display_code()
 				}
 				//------ Delete object ends
 				if (objectExists) {
+					ImGui::Separator();
 					ImGui::Text("Texture: ", loadedObjs[selected]->texId);
 					// Load Texture Button
 					if (ImGui::Button("Load Texture"))
@@ -733,7 +738,6 @@ void my_display_code()
 					glm::mat4x4 rotMat(1.0f);
 					rotMat = glm::rotate(glm::radians(ligtRotX), glm::vec3(1.0, 0.0, 0.0));
 
-
 					//std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
 					glm::mat4x4 translateLight = glm::translate(glm::vec3(-dirLight->getLightPosition()));
 					glm::mat4x4 translateLightBack = glm::translate(glm::vec3(dirLight->getLightPosition()));
@@ -765,7 +769,7 @@ void my_display_code()
 				}
 				if (DirectionalLight* dirLight = dynamic_cast<DirectionalLight*>(lightVector[selectedLight])) {
 					glm::mat4x4 rotMat(1.0f);
-					rotMat = glm::rotate(glm::radians(ligtRotZ), glm::vec3(0.0, 0.0, 1.0));
+					rotMat = glm::rotate(glm::radians(ligtRotZ), glm::vec3(0.0, 1.0, 0.0)); // Z
 
 					//std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
 					glm::mat4x4 translateLight = glm::translate(glm::vec3(-dirLight->getLightPosition()));
@@ -788,7 +792,7 @@ void my_display_code()
 			if (ImGui::IsItemActive()) {
 				if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
 					glm::mat4x4 rotMat(1.0f);
-					rotMat = glm::rotate(glm::radians(ligtRotZ), glm::vec3(0.0, 1.0, 0.0));
+					rotMat = glm::rotate(glm::radians(ligtRotZ), glm::vec3(0.0, 0.0, 1.0)); // Y
 
 					//std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
 					glm::mat4x4 translateLight = glm::translate(glm::vec3(-posLight->getLightPosition()));
@@ -837,9 +841,12 @@ void my_display_code()
 
 	//
 
+	ImGui::Separator();
+	ImGui::Text("OaK Editing Panel");
 	ImGui::Checkbox("Create Light", &show_lighting_window);
 
-	// TODO : Reset Button Function for All the Lights
+	// TODO : Reset Button Function for All the Light Creation Values
+
 	if (show_lighting_window)
 	{
 		static int radButtonToggled = 0;
@@ -899,7 +906,7 @@ void my_display_code()
 			static glm::vec4 directionalAmbientColor = glm::vec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
 			static glm::vec4 directionalDiffuseColor = glm::vec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
 			static glm::vec4 directionalSpecularColor = glm::vec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
-			static glm::vec4 directionalLightDir = glm::vec4(0.0f, -10.0f, 0.0f, 1.0f);
+			static glm::vec3 directionalLightDir = glm::vec3(0.0f, -10.0f, 0.0f);
 			static glm::vec4 directionalLightPos = glm::vec4(0.0f, 10.0f, 0.0f, 1.0f);
 
 			ImGui::Text("Directional Light - Ambient Property");
@@ -987,7 +994,6 @@ void my_display_code()
 			ImGui::SliderFloat("Cutoff", &spotCutoff, 0.0f, 89.99f, "%0.2f");
 
 			ImGui::Text("Positional Light - Attenuation Type");
-			static int item_current_3 = -1; // If the selection isn't within 0..count, Combo won't display a preview
 			ImGui::Combo("Type", &currentAttenType, attenTypes, IM_ARRAYSIZE(attenTypes));
 
 			// TODO: What is the Max Attenuation Coefficient?
@@ -1041,12 +1047,6 @@ void my_display_code()
 		ImGui::End();
 	}
 
-	//Material Editing Window
-
-
-
-
-
 	ImGui::End();
 
 	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
@@ -1063,6 +1063,7 @@ void glut_display_func()
 	ImGuiIO& io = ImGui::GetIO();
 	glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	//glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context where shaders may be bound, but prefer using the GL3+ code
 	//Skybox
 	//draw scene as normal
@@ -1092,37 +1093,6 @@ void glut_display_func()
 	glLoadIdentity();
 	myLookAt();
 
-
-
-
-
-	/*glPushMatrix();
-
-	glTranslatef(-light_position[0], -light_position[1], -light_position[2]);
-
-
-
-	for (int i = 0; i < loadedObjs[0]->LoadedMeshes.size(); i++) {
-		objl::Mesh currentMesh = loadedObjs[0]->LoadedMeshes[i];
-
-		for (int j = 0, ct = 0; j < currentMesh.Indices.size(); j += 3) {
-
-			glBegin(GL_LINE_LOOP);
-			glColor3f(0.0, 0.0, 0.0);
-			glVertex3f(currentMesh.Vertices[currentMesh.Indices[j]].Position.X, currentMesh.Vertices[currentMesh.Indices[j]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j]].Position.Z);
-
-
-			glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Z);
-
-
-			glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Z);
-
-			glEnd();
-
-
-		}
-	}
-	glPopMatrix();*/
 	glDisable(GL_LIGHTING);
 
 	//Grid -------
@@ -1257,14 +1227,17 @@ void glut_display_func()
 		glPopMatrix();
 
 	}
+
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
-	//glLineWidth(2);
+
 	if (selectedLight > -1) {
 		glPushMatrix();
+
 		for (int i = 0; i < lightVector.size(); i++) {
 			createLight(lightVector[i]);
 		}
+
 		glColor4f(0.5, 0.6, 1, 1);
 		if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
 			//std::cout << pointLight->getLightDirection().x << " " << pointLight->getLightDirection().y << " " << pointLight->getLightDirection().z << std::endl;
@@ -1308,7 +1281,6 @@ void glut_display_func()
 
 		glPopMatrix();
 	}
-	//glLineWidth(1);
 
 	ImGui_ImplOpenGL2_NewFrame();
 	ImGui_ImplGLUT_NewFrame();
