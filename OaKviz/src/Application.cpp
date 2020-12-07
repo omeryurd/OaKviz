@@ -21,6 +21,7 @@
 #include "core/Light.h"
 
 extern Camera m_camera;
+extern bool orthoOn;
 
 #include <GL/glew.h>
 #ifdef __APPLE__
@@ -674,7 +675,7 @@ void my_display_code()
 					if (tex)
 						ImGui::OpenPopup("Load Texture");
 
-					if (file_dialog2.showFileDialog("Load Texture", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".jpg,.png,.7z"))
+					if (file_dialog2.showFileDialog("Load Texture", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".png,.jpg"))
 					{
 						std::cout << file_dialog2.selected_fn << std::endl;      // The name of the selected file or directory in case of Select Directory dialog mode
 						const char* pathName = file_dialog2.selected_fn.c_str();
@@ -918,15 +919,15 @@ void my_display_code()
 			ImGui::Text("Directional Light - Specular Property");
 			ImGui::ColorEdit4("Color##7f", (float*)&directionalSpecularColor, ImGuiColorEditFlags_Float);
 
-			ImGui::Text("Directional Light - Direction");
-			ImGui::DragFloat("Direction: X", &directionalLightDir.x, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
-			ImGui::DragFloat("Direction: Y", &directionalLightDir.y, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
-			ImGui::DragFloat("Direction: Z", &directionalLightDir.z, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::Text("Directional Light - Direction:");
+			ImGui::DragFloat("X##dirDirX", &directionalLightDir.x, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::DragFloat("Y##dirDirY", &directionalLightDir.y, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::DragFloat("Z##dirDirZ", &directionalLightDir.z, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
 
-			ImGui::Text("Directional Light - Position");
-			ImGui::DragFloat("Position: X", &directionalLightPos.x, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
-			ImGui::DragFloat("Position: Y", &directionalLightPos.y, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
-			ImGui::DragFloat("Position: Z", &directionalLightPos.z, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::Text("Directional Light - Position:");
+			ImGui::DragFloat("X##dirPosX", &directionalLightPos.x, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::DragFloat("Y##dirPosY", &directionalLightPos.y, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
+			ImGui::DragFloat("Z##dirPosZ", &directionalLightPos.z, 0.2f, -FLT_MAX, FLT_MAX, "%.02f");
 
 			if (ImGui::Button("Create Directional Light")) {
 
@@ -1060,6 +1061,15 @@ void my_display_code()
 void glut_display_func()
 {
 	// Start the Dear ImGui frame
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	//if (orthoOn) {
+	//	glOrtho(-16.0f, 16.0f, -9.0f, 9.0f, -30.0, 30.0f);
+	//}
+	//else {
+	//	gluPerspective(45, (16.0 / 9.0), 0.1, 150);
+	//}
+	
 	ImGuiIO& io = ImGui::GetIO();
 	glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1228,19 +1238,36 @@ void glut_display_func()
 
 	}
 
+
+
+	ImGui_ImplOpenGL2_NewFrame();
+	ImGui_ImplGLUT_NewFrame();
+
+	my_display_code();
+	
+	for (int i = 0; i < lightVector.size(); i++) {
+		createLight(lightVector[i]);
+	}
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
+
 
 	if (selectedLight > -1) {
 		glPushMatrix();
 
-		for (int i = 0; i < lightVector.size(); i++) {
-			createLight(lightVector[i]);
-		}
+	
 
 		glColor4f(0.5, 0.6, 1, 1);
+		glPointSize(10);
 		if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
 			//std::cout << pointLight->getLightDirection().x << " " << pointLight->getLightDirection().y << " " << pointLight->getLightDirection().z << std::endl;
+			glColor4f(0.9, 0.7, 0.1, 1);
+			
+			glBegin(GL_POINTS);
+			
+			glVertex4fv(glm::value_ptr(glm::vec4(posLight->getLightDirection(), 1.0f)));
+			glEnd();
+			glColor4f(0.5, 0.6, 1, 1);
 			glBegin(GL_LINES);
 			glVertex4fv(glm::value_ptr(glm::vec4(posLight->getLightDirection(), 1.0f)));
 			glVertex4fv(glm::value_ptr(posLight->getLightPosition()));
@@ -1249,25 +1276,20 @@ void glut_display_func()
 			float distance = sqrt(temp.x * temp.x + temp.y * temp.y + temp.z * temp.z);
 			float radius = glm::tan(glm::radians(posLight->getCutoff())) * distance;
 			drawCircle(posLight->getLightDirection().x, posLight->getLightDirection().y, posLight->getLightDirection().z, radius, 10);
-			//posLight->setLightDirection(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 		}
 		else if (DirectionalLight* dirLight = dynamic_cast<DirectionalLight*>(lightVector[selectedLight])) {
-			//std::cout << pointLight->getLightDirection().x << " " << pointLight->getLightDirection().y << " " << pointLight->getLightDirection().z << std::endl;
 			glBegin(GL_LINES);
 			glVertex4fv(glm::value_ptr(glm::vec4(dirLight->getLightDirection(), 1.0f)));
-			glVertex4fv(glm::value_ptr(dirLight->getLightPosition()));
+			glVertex3fv(glm::value_ptr(glm::vec3(dirLight->getLightPosition())));
 			glEnd();
-			glPointSize(5);
+			//glPointSize(5);
 			glColor4f(0.9, 0.7, 0.1, 1);
 			glBegin(GL_POINTS);
-
 			glVertex4fv(glm::value_ptr(glm::vec4(dirLight->getLightDirection(), 1.0f)));
 			glEnd();
-			//dirLight->setLightDirection(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 		}
 		else if (PointLight* pointLight = dynamic_cast<PointLight*>(lightVector[selectedLight])) {
 			glColor4f(0.9, 0.7, 0.1, 1);
-			glPointSize(20);
 			glBegin(GL_POINTS);
 			glVertex3fv(glm::value_ptr(pointLight->getLightPosition()));
 			glEnd();
@@ -1281,17 +1303,11 @@ void glut_display_func()
 
 		glPopMatrix();
 	}
-
-	ImGui_ImplOpenGL2_NewFrame();
-	ImGui_ImplGLUT_NewFrame();
-
-	my_display_code();
-
 	// Rendering
 	ImGui::Render();
 
 	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
-
+	glEnable(GL_LIGHTING);
 
 
 	glFlush();

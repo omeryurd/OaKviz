@@ -146,13 +146,71 @@ void ImGui_ImplGLUT_KeyboardFunc(unsigned char c, int x, int y)
         io.KeysDown[c] = true;
     glm::vec3 view = glm::normalize(m_camera.GetViewDir());
     if (c == 'w') {
-        m_camera.SetCameraView(m_camera.GetEye() + view, m_camera.GetLookAt(), m_camera.GetUpVector());
+        
+        //ortho_camera.SetCameraView(ortho_camera.GetEye() + view2, ortho_camera.GetLookAt(), ortho_camera.GetUpVector());
+        if (orthoOn) {
+
+            resizeX = orthoRight*0.05;
+            resizeY = orthoTop * 0.05;
+           // if (orthoLeft <= 0 && orthoBottom <= 0 && orthoRight >= 0 && orthoTop >= 0) {
+                orthoLeft += resizeX;
+                orthoBottom += resizeY;
+                orthoRight -= resizeX;
+                orthoTop -= resizeY;
+            //}
+        }
+        else {
+            m_camera.SetCameraView(m_camera.GetEye() + view, m_camera.GetLookAt(), m_camera.GetUpVector());
+        }
+
     }
     if (c == 's') {
-        m_camera.SetCameraView(m_camera.GetEye() - view, m_camera.GetLookAt(), m_camera.GetUpVector());
+       
+        //ortho_camera.SetCameraView(ortho_camera.GetEye() - view2, ortho_camera.GetLookAt(), ortho_camera.GetUpVector());
+        if (orthoOn) {
+            resizeX = -orthoRight * 0.05;
+            resizeY = -orthoTop * 0.05;
+           // if (orthoLeft <= 0 && orthoBottom <= 0 && orthoRight >= 0 && orthoTop >= 0) {
+                orthoLeft += resizeX;
+                orthoBottom += resizeY;
+                orthoRight -= resizeX;
+                orthoTop -= resizeY;
+            //}
+        }
+        else {
+            m_camera.SetCameraView(m_camera.GetEye() - view, m_camera.GetLookAt(), m_camera.GetUpVector());
+        }
     }
     if (c == 'r' || c == 'R') {
         m_camera.SetCameraView(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    }
+    if (c == 'p') {
+        m_camera.SetCameraView(m_camera.GetEye(), m_camera.GetLookAt(), m_camera.GetUpVector());
+        orthoOn = false;
+    }
+    if (c == '1') {
+        ortho_camera.SetCameraView(glm::vec3(0, abs(m_camera.GetEye().y), 0), glm::vec3(0, -abs(m_camera.GetEye().y), 0), glm::vec3(0.0f, 0.0f, -1.0f));
+        orthoOn = true;
+    }
+    if (c == '2') {
+        ortho_camera.SetCameraView(glm::vec3(0, -abs(m_camera.GetEye().y), 0), glm::vec3(0.0f, abs(m_camera.GetEye().y), 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+        orthoOn = true;
+    }
+    if (c == '3') {
+        ortho_camera.SetCameraView(glm::vec3(0, 0, abs(m_camera.GetEye().z)), glm::vec3(0, 0, -abs(m_camera.GetEye().z)), glm::vec3(0.0f, 1.0f, 0.0f));
+        orthoOn = true;
+    }
+    if (c == '4') {
+        ortho_camera.SetCameraView(glm::vec3(0, 0, -abs(m_camera.GetEye().z)), glm::vec3(0, 0, abs(m_camera.GetEye().z)), glm::vec3(0.0f, 1.0f, 0.0f));
+        orthoOn = true;
+    }
+    if (c == '5') {
+        ortho_camera.SetCameraView(glm::vec3(abs(m_camera.GetEye().x), 0, 0), glm::vec3(-abs(m_camera.GetEye().x), 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
+        orthoOn = true;
+    }
+    if (c == '6') {
+        ortho_camera.SetCameraView(glm::vec3(-abs(m_camera.GetEye().x), 0, 0), glm::vec3(abs(m_camera.GetEye().x), 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
+        orthoOn = true;
     }
 
     glutPostRedisplay();
@@ -329,6 +387,7 @@ void ImGui_ImplGLUT_MotionFunc(int x, int y)
         m_lastMousePosY = io.MousePos.y; 
         io.MouseClickedPos[2];
         //printf("upVec x:%f, y:%f, z:%f\n", m_upVector.x, m_upVector.y, m_upVector.z);
+        //ortho_camera = m_camera;
     }
 
     if (pan_on) {
@@ -342,7 +401,7 @@ void ImGui_ImplGLUT_MotionFunc(int x, int y)
         }
         glm::vec3 targetToEye;
         glm::vec3 finalLookx;
-        glm::vec3 finalLooky;
+        glm::vec3 finalLooky(0.0f);
         glm::vec3 upVec(1, 0, 0);
         glm::vec3 finalLook;
         //printf("cx :%f\n", io.MouseClickedPos[2].x);
@@ -351,23 +410,37 @@ void ImGui_ImplGLUT_MotionFunc(int x, int y)
         //printf("x :%f\n", io.MousePos.x);
         targetToEye = m_camera.GetEye() - m_camera.GetLookAt();
         targetToEye = glm::normalize(targetToEye);
+        glm::vec3 targetToEye2 = ortho_camera.GetEye() - ortho_camera.GetLookAt();
+        targetToEye2 = glm::normalize(targetToEye2);
         
         if (io.KeyShift) {
             if ((io.MouseClickedPos[2].x - io.MousePos.x) <= 0) { //Moving Left
                 if (diffx < io.MousePos.x) {
-                    finalLookx = (glm::cross(targetToEye, -m_camera.GetUpVector())) * cameraSpeed;
-                    //printf("upVec x:%f, y:%f, z:%f\n", m_camera.GetUpVector().x, m_camera.GetUpVector().y, m_camera.GetUpVector().z);
+                    if (orthoOn) {
+                        finalLookx = (glm::cross(targetToEye2, -ortho_camera.GetUpVector())) * cameraSpeed;
+                    }else
+                        finalLookx = (glm::cross(targetToEye, -m_camera.GetUpVector())) * cameraSpeed;
                 }
                 else {
-                    finalLookx = (glm::cross(targetToEye, m_camera.GetUpVector())) * cameraSpeed;
+                    if (orthoOn) {
+                        finalLookx = (glm::cross(targetToEye2, ortho_camera.GetUpVector())) * cameraSpeed;
+                    }else
+                        finalLookx = (glm::cross(targetToEye, m_camera.GetUpVector())) * cameraSpeed;
                 }
+
             }
             else if ((io.MouseClickedPos[2].x - io.MousePos.x) > 0) {   //Moving right
                 if (diffx < io.MousePos.x) {
-                    finalLookx = (glm::cross(targetToEye, -m_camera.GetUpVector())) * cameraSpeed;
+                    if (orthoOn) {
+                        finalLookx = (glm::cross(targetToEye2, -ortho_camera.GetUpVector())) * cameraSpeed;
+                    }else
+                        finalLookx = (glm::cross(targetToEye, -m_camera.GetUpVector())) * cameraSpeed;
                 }
                 else {
-                    finalLookx = (glm::cross(targetToEye, m_camera.GetUpVector())) * cameraSpeed;
+                    if (orthoOn) {
+                        finalLookx = (glm::cross(targetToEye2, ortho_camera.GetUpVector())) * cameraSpeed;
+                    }else
+                        finalLookx = (glm::cross(targetToEye, m_camera.GetUpVector())) * cameraSpeed;
                 }
 
             }
@@ -375,38 +448,53 @@ void ImGui_ImplGLUT_MotionFunc(int x, int y)
             printf("up x:%f, y:%f, z:%f\n", m_camera.GetUpVector().x, m_camera.GetUpVector().y, m_camera.GetUpVector().z);
             printf("final x:%f, y:%f, z:%f\n", finalLookx.x, finalLookx.y, finalLookx.z);*/
             m_camera.SetCameraView(m_camera.GetEye() - finalLookx, m_camera.GetLookAt() - finalLookx, m_upVector);
+            ortho_camera.SetCameraView(ortho_camera.GetEye() - finalLookx, ortho_camera.GetLookAt() - finalLookx, ortho_camera.GetUpVector());
         }
         glm::vec3 right = glm::normalize(m_camera.GetRightVector());
+        glm::vec3 right2 = glm::normalize(ortho_camera.GetRightVector());
         if (io.KeyCtrl) {
             if ((io.MouseClickedPos[2].y - io.MousePos.y) <= 0) { //Down
-                if (diffy < io.MousePos.y) {
-                   //upVec.x = 1;
-                    finalLooky = (glm::cross(targetToEye, -right)) * cameraSpeed;
-
+                if (diffy < io.MousePos.y){
+                   
+                    if (orthoOn) {
+                        finalLooky = (glm::cross(targetToEye2, -right2)) * cameraSpeed;
+                    }
+                    else {
+                        finalLooky = (glm::cross(targetToEye, -right)) * cameraSpeed;
+                    }
                 }
                 else {
-                    //upVec.x = -1;
-                    finalLooky = (glm::cross(targetToEye, right)) * cameraSpeed;
-
+                    if (orthoOn) {
+                        finalLooky = (glm::cross(targetToEye2, right2)) * cameraSpeed;
+                    }else
+                        finalLooky = (glm::cross(targetToEye, right)) * cameraSpeed;
                 }
-
             }
             else if ((io.MouseClickedPos[2].y - io.MousePos.y) > 0) {
                 if (diffy < io.MousePos.y) {
-                    //upVec.x = 1;
-                    finalLooky = (glm::cross(targetToEye, -right)) * cameraSpeed;
-
+                    if (orthoOn) {
+                        finalLooky = (glm::cross(targetToEye2, -right2)) * cameraSpeed;
+                    }else
+                        finalLooky = (glm::cross(targetToEye, -right)) * cameraSpeed;
                 }
                 else {
-                    //upVec.x = -1;
-                    finalLooky = (glm::cross(targetToEye, right)) * cameraSpeed;
+                    if (orthoOn) {
+                        finalLooky = (glm::cross(targetToEye2, right2)) * cameraSpeed;
+                    }else
+                        finalLooky = (glm::cross(targetToEye, right)) * cameraSpeed;
                 }
                 
             }
 
             glm::vec3 eye(m_camera.GetEye().x - finalLooky.x, m_camera.GetEye().y - finalLooky.y, m_camera.GetEye().z - finalLooky.z);
             glm::vec3 look(m_camera.GetLookAt().x - finalLooky.x, m_camera.GetLookAt().y - finalLooky.y, m_camera.GetLookAt().z - finalLooky.z);
-            m_camera.SetCameraView(eye, look, m_upVector);
+            glm::vec3 eye2(ortho_camera.GetEye().x - finalLooky.x, ortho_camera.GetEye().y - finalLooky.y, ortho_camera.GetEye().z - finalLooky.z);
+            glm::vec3 look2(ortho_camera.GetLookAt().x - finalLooky.x, ortho_camera.GetLookAt().y - finalLooky.y, ortho_camera.GetLookAt().z - finalLooky.z);
+            if (orthoOn) {
+                ortho_camera.SetCameraView(eye2, look2, ortho_camera.GetUpVector());
+            }else
+                m_camera.SetCameraView(eye, look, m_upVector);
+            
         }
      
     }
@@ -418,7 +506,16 @@ void ImGui_ImplGLUT_MotionFunc(int x, int y)
 void myLookAt() {
     glm::vec3 cameraTarget = cameraFront;
     //gluLookAt(0.0f, 0.0f, 15.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    if (orthoOn) {
+        glOrtho(orthoLeft, orthoRight, orthoBottom, orthoTop, -30.0, 30.0f);
+        gluLookAt(ortho_camera.GetEye().x, ortho_camera.GetEye().y, ortho_camera.GetEye().z, ortho_camera.GetLookAt().x, ortho_camera.GetLookAt().y, ortho_camera.GetLookAt().z, ortho_camera.GetUpVector().x, ortho_camera.GetUpVector().y, ortho_camera.GetUpVector().z);
+    }
+    else {
+        gluPerspective(45, (16.0 / 9.0), 0.1, 150);
+        gluLookAt(m_camera.GetEye().x, m_camera.GetEye().y, m_camera.GetEye().z, m_camera.GetLookAt().x, m_camera.GetLookAt().y, m_camera.GetLookAt().z, m_camera.GetUpVector().x, m_camera.GetUpVector().y, m_camera.GetUpVector().z);
+    }
 
-    gluLookAt(m_camera.GetEye().x, m_camera.GetEye().y, m_camera.GetEye().z, m_camera.GetLookAt().x, m_camera.GetLookAt().y, m_camera.GetLookAt().z, m_camera.GetUpVector().x, m_camera.GetUpVector().y, m_camera.GetUpVector().z);
 }
 

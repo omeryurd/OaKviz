@@ -22,7 +22,15 @@ float m_lastMousePosY = 720.0f / 2.0;
 bool arcball_on = false;
 bool pan_on = false;
 Camera m_camera(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+Camera ortho_camera(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+glm::vec3 view2;
 glm::vec3 m_upVector(0.0f, 1.0f, 0.0f);
-
+float resizeX = 0.0f;
+float resizeY = 0.0f;
+float orthoLeft = -16.0f;
+float orthoRight = 16.0f;
+float orthoTop = 9.0f;
+float orthoBottom = -9.0f;
+bool orthoOn = false;
 float pan_x = 0;
 float pan_y = 0;
