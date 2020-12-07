@@ -393,12 +393,12 @@ void ImGui_ImplGLUT_MotionFunc(int x, int y)
     if (pan_on) {
         //const float cameraSpeed = 50*io.DeltaTime;
         float cameraSpeed = 0.2;
-        if (io.DeltaTime < 0.0085) {
+       /* if (io.DeltaTime < 0.0085) {
             cameraSpeed = 0.2;
         }
         else {
             cameraSpeed = io.DeltaTime * 20;
-        }
+        }*/
         glm::vec3 targetToEye;
         glm::vec3 finalLookx;
         glm::vec3 finalLooky(0.0f);
