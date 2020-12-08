@@ -331,7 +331,7 @@ bool loadTexture(std::string path, objl::Loader*& objectModel) {
 		// We will use linear interpolation for minifying filter
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		// Texture specification
-		/*glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, x, y); 
+		/*glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, x, y);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, x, y, GL_RGB, GL_UNSIGNED_BYTE, data);*/
 		glTexImage2D(GL_TEXTURE_2D, 0, n, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);// Texture specification.
 		glGenerateMipmap(GL_TEXTURE_2D);
@@ -561,6 +561,14 @@ void deleteObjPopUp(std::vector<objl::Loader*>& objects, unsigned int index) {
 }
 glm::vec4 tempLightDir(1.0f);
 
+static auto vector_getter = [](void* vec, int idx, const char** out_text)
+{
+	auto& vector = *static_cast<std::vector<std::string>*>(vec);
+	if (idx < 0 || idx >= static_cast<int>(vector.size())) { return false; }
+	*out_text = vector.at(idx).c_str();
+	return true;
+};
+
 void my_display_code()
 {
 	static imgui_addons::ImGuiFileBrowser file_dialog2;
@@ -569,6 +577,7 @@ void my_display_code()
 	static float  ligtRotX = 0.0f;
 	static float  ligtRotY = 0.0f;
 	static float  ligtRotZ = 0.0f;
+	static int selected_mesh = 0;
 	static float cutoff;
 	//--------------------------------
 
@@ -585,6 +594,7 @@ void my_display_code()
 				selected = n;
 				selectedIndex = n;
 				selectedLight = -1;
+				selected_mesh = 0;
 			}
 
 		}
@@ -633,7 +643,6 @@ void my_display_code()
 			ImGui::SliderFloat("Y##translateY", &loadedObjs[selected]->translate.Y, -180.0f, 180.0f);
 			ImGui::SliderFloat("Z##translateZ", &loadedObjs[selected]->translate.Z, -180.0f, 180.0f);
 
-
 			if (!loadedObjs.empty()) {
 				// Delete an Object
 				if (ImGui::Button("Delete Object.."))
@@ -669,6 +678,9 @@ void my_display_code()
 					if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
 					ImGui::EndPopup();
 				}
+
+
+
 				//------ Delete object ends
 				if (objectExists) {
 					ImGui::Separator();
@@ -1005,7 +1017,6 @@ void my_display_code()
 			ImGui::Text("Positional Light - Attenuation Coefficient");
 			ImGui::SliderFloat("Coefficient", &attenCoef, 1.0f, 60.0f, "%f");
 
-
 			if (ImGui::Button("Create Positional Light")) {
 
 				ImGui::OpenPopup("Maximum Lights Warning!");
@@ -1052,6 +1063,43 @@ void my_display_code()
 		ImGui::End();
 	}
 
+	if (selected >= 0 && !loadedObjs.empty()) {
+
+		ImGui::Checkbox("Edit Material Properties", &show_material_window);
+
+		if (show_material_window)
+		{
+			ImGui::Begin("Edit Material Properties", &show_material_window);
+
+			std::vector<std::string> meshNames;
+			
+			//Creating Mesh Names
+			for (int i = 0; i < loadedObjs[selected]->LoadedMeshes.size(); i++) {
+				meshNames.push_back(loadedObjs[selected]->LoadedMeshes[i].MeshName);
+			}
+
+			ImGui::ListBox("Mesh Names", &selected_mesh, vector_getter, static_cast<void*>(&meshNames), meshNames.size(), 5);
+
+			ImGui::Text("Ambient Property");
+			ImGui::ColorEdit3("Color##amb", (float*)&(loadedObjs[selected]->LoadedMeshes[selected_mesh].MeshMaterial.Ka), ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Diffuse Property");
+			ImGui::ColorEdit3("Color##diff", (float*)&(loadedObjs[selected]->LoadedMeshes[selected_mesh].MeshMaterial.Kd), ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Specular Property");
+			ImGui::ColorEdit3("Color##spec", (float*)&(loadedObjs[selected]->LoadedMeshes[selected_mesh].MeshMaterial.Ks), ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Emmisive Property");
+			ImGui::ColorEdit3("Color##emes", (float*)&(loadedObjs[selected]->LoadedMeshes[selected_mesh].MeshMaterial.Ke), ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Shineness Property");
+			ImGui::SliderInt("Exponent##shin", (int*)&(loadedObjs[selected]->LoadedMeshes[selected_mesh].MeshMaterial.Ns), 0, 128, "%d");
+
+			ImGui::End();
+
+		}
+	}
+
 	ImGui::End();
 
 	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
@@ -1073,7 +1121,7 @@ void glut_display_func()
 	//else {
 	//	gluPerspective(45, (16.0 / 9.0), 0.1, 150);
 	//}
-	
+
 	ImGuiIO& io = ImGui::GetIO();
 	glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1218,9 +1266,11 @@ void glut_display_func()
 				glm::vec3 Ka(currentMesh.MeshMaterial.Ka.X, currentMesh.MeshMaterial.Ka.Y, currentMesh.MeshMaterial.Ka.Z);
 				glm::vec3 Kd(currentMesh.MeshMaterial.Kd.X, currentMesh.MeshMaterial.Kd.Y, currentMesh.MeshMaterial.Kd.Z);
 				glm::vec3 Ks(currentMesh.MeshMaterial.Ks.X, currentMesh.MeshMaterial.Ks.Y, currentMesh.MeshMaterial.Ks.Z);
+				glm::vec3 Ke(currentMesh.MeshMaterial.Ke.X, currentMesh.MeshMaterial.Ke.Y, currentMesh.MeshMaterial.Ke.Z);
 				glMaterialfv(GL_FRONT, GL_AMBIENT, glm::value_ptr(Ka));
 				glMaterialfv(GL_FRONT, GL_DIFFUSE, glm::value_ptr(Kd));
 				glMaterialfv(GL_FRONT, GL_SPECULAR, glm::value_ptr(Ks));
+				glMaterialfv(GL_FRONT, GL_EMISSION, glm::value_ptr(Ke));
 				glMateriali(GL_FRONT, GL_SHININESS, currentMesh.MeshMaterial.Ns);
 				glTexCoord2f(currentMesh.Vertices[currentMesh.Indices[j]].TextureCoordinate.X, currentMesh.Vertices[currentMesh.Indices[j]].TextureCoordinate.Y);
 				glNormal3f(currentMesh.Vertices[currentMesh.Indices[j]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Z);
@@ -1248,7 +1298,7 @@ void glut_display_func()
 	ImGui_ImplGLUT_NewFrame();
 
 	my_display_code();
-	
+
 	for (int i = 0; i < lightVector.size(); i++) {
 		createLight(lightVector[i]);
 	}
@@ -1259,16 +1309,16 @@ void glut_display_func()
 	if (selectedLight > -1) {
 		glPushMatrix();
 
-	
+
 
 		glColor4f(0.5, 0.6, 1, 1);
 		glPointSize(10);
 		if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
 			//std::cout << pointLight->getLightDirection().x << " " << pointLight->getLightDirection().y << " " << pointLight->getLightDirection().z << std::endl;
 			glColor4f(0.9, 0.7, 0.1, 1);
-			
+
 			glBegin(GL_POINTS);
-			
+
 			glVertex4fv(glm::value_ptr(glm::vec4(posLight->getLightDirection(), 1.0f)));
 			glEnd();
 			glColor4f(0.5, 0.6, 1, 1);
