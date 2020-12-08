@@ -308,7 +308,7 @@ void init_other() {
 bool loadTexture(std::string path, objl::Loader*& objectModel) {
 	int x, y, n;
 	stbi_set_flip_vertically_on_load(true);
-	unsigned char* data = stbi_load(path.c_str(), &x, &y, &n, STBI_rgb);
+	unsigned char* data = stbi_load(path.c_str(), &x, &y, &n, STBI_rgb_alpha);
 	unsigned int* texId;
 	texId = new unsigned int;
 	glGenTextures(static_cast<GLsizei>(1), texId);
@@ -333,7 +333,7 @@ bool loadTexture(std::string path, objl::Loader*& objectModel) {
 		// Texture specification
 		/*glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, x, y);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, x, y, GL_RGB, GL_UNSIGNED_BYTE, data);*/
-		glTexImage2D(GL_TEXTURE_2D, 0, n, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);// Texture specification.
+		glTexImage2D(GL_TEXTURE_2D, 0, n, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);// Texture specification.
 		glGenerateMipmap(GL_TEXTURE_2D);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -426,6 +426,7 @@ void createLight(Light* light) {
 		glLightf(posLight->getLightID(), GL_SPOT_CUTOFF, posLight->getCutoff());
 		glLightf(posLight->getLightID(), GL_SPOT_EXPONENT, posLight->getExponent());
 		glLightf(posLight->getLightID(), posLight->getAttenutationType(), posLight->getattenuationCoeff());
+		printf("Atten2:%d\n", posLight->attenuationType);
 		if (posLight->visible) {
 			glEnable(posLight->getLightID());
 		}
@@ -607,6 +608,9 @@ void my_display_code()
 		for (int n = 0; n < lightVector.size(); n++)
 		{
 			lightName.append(std::to_string(n));
+			lightName += " (";
+			lightName.append(lightVector[n]->typeName);
+			lightName += ")";
 			char buf[32];
 			sprintf(buf, "Object %d", n);
 			if (ImGui::Selectable(lightName.c_str(), selectedLight == n)) {
@@ -832,7 +836,23 @@ void my_display_code()
 
 		}
 		if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
+			static const char* attenTypes[3] = { "CONSTANT", "LINEAR", "QUADRATIC" };
+			int currentAttenType2 = posLight->attenuationType - ATTEN_TYPE;
 			ImGui::SliderFloat("Cutoff Angle", &posLight->cutoff, 0.0f, 89.99f);
+			ImGui::SliderInt("Exponent", (int*)(&posLight->exponent), 0, 128, "%d");
+			ImGui::Text("Positional Light - Attenuation Type");
+			if (ImGui::Combo("Type", &currentAttenType2, attenTypes, IM_ARRAYSIZE(attenTypes))) {
+				if (currentAttenType2 == 0) {
+					posLight->setAttenutationType(ATTEN_TYPE);
+				}
+				else if (currentAttenType2 == 1) {
+					posLight->setAttenutationType(ATTEN_TYPE + 1);
+				}
+				else if (currentAttenType2 == 2) {
+					posLight->setAttenutationType(ATTEN_TYPE + 2);
+				}
+				printf("Atten:%d\n", posLight->attenuationType);
+			}
 		}
 		ImGui::Text("Position:");
 
@@ -853,6 +873,10 @@ void my_display_code()
 			ImGui::DragFloat("Y##lightDirY", &dirLight1->lightDirection.y, 0.02f, -FLT_MAX, FLT_MAX, "%.04f");
 			ImGui::DragFloat("Z##lightDirZ", &dirLight1->lightDirection.z, 0.02f, -FLT_MAX, FLT_MAX, "%.04f");
 		}
+		ImGui::Text("Light Intensity Properties:");
+		ImGui::ColorEdit4("Ambient##ambientP", (float*)&lightVector[selectedLight]->ambientProperty, ImGuiColorEditFlags_Float);
+		ImGui::ColorEdit4("Diffuse##diffuseP", (float*)&lightVector[selectedLight]->diffuseProperty, ImGuiColorEditFlags_Float);
+		ImGui::ColorEdit4("Specular##specularP", (float*)&lightVector[selectedLight]->specularProperty, ImGuiColorEditFlags_Float);
 
 	}
 
@@ -1308,20 +1332,17 @@ void glut_display_func()
 
 	if (selectedLight > -1) {
 		glPushMatrix();
-
-
-
 		glColor4f(0.5, 0.6, 1, 1);
 		glPointSize(10);
 		if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
 			//std::cout << pointLight->getLightDirection().x << " " << pointLight->getLightDirection().y << " " << pointLight->getLightDirection().z << std::endl;
 			glColor4f(0.9, 0.7, 0.1, 1);
-
 			glBegin(GL_POINTS);
-
 			glVertex4fv(glm::value_ptr(glm::vec4(posLight->getLightDirection(), 1.0f)));
+			glColor4f(0.9, 0.6, 0.7, 1);
+			glVertex4fv(glm::value_ptr(posLight->getLightPosition()));
 			glEnd();
-			glColor4f(0.5, 0.6, 1, 1);
+			glColor4f(1.0, 0.0, 0.3, 1);
 			glBegin(GL_LINES);
 			glVertex4fv(glm::value_ptr(glm::vec4(posLight->getLightDirection(), 1.0f)));
 			glVertex4fv(glm::value_ptr(posLight->getLightPosition()));
