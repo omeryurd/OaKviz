@@ -11,30 +11,40 @@ public:
 	glm::vec4 diffuseProperty;
 	glm::vec4 lightPosition;
 	bool visible;
+	glm::vec4 specularProperty;
+	std::string typeName;
 
 	Light() {
 		lightID = 0x4000;
 		ambientProperty = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
 		diffuseProperty = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
 		lightPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		specularProperty = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		visible = true;
+		typeName = "Light";
 	}
 	Light(unsigned int lightID) {
 		this->lightID  = lightID;
 		ambientProperty = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
 		diffuseProperty = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
 		lightPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		specularProperty = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		visible = true;
+		typeName = "Light";
 	}
 
 	virtual glm::vec4 getLightPosition() = 0;
 	virtual void setLightPosition(glm::vec4 lightPosition) = 0;
+	virtual std::string getLightName() = 0;
 
 	glm::vec4 getAmbientProperty() {
 		return this->ambientProperty;
 	}
 	glm::vec4 getDiffusedProperty() {
 		return this->diffuseProperty;
+	}
+	glm::vec4 getSpecularProperty() {
+		return this->specularProperty;
 	}
 
 	void setLightID(unsigned int light_id) {
@@ -51,6 +61,9 @@ public:
 	void setDiffuseProperty(glm::vec4 diffuseProperty) {
 		this->diffuseProperty = diffuseProperty;
 	}
+	void setSpecularProperty(glm::vec4 specularProperty) {
+		this->specularProperty = specularProperty;
+	}
 
 
 };
@@ -58,18 +71,17 @@ public:
 class PointLight : public Light {
 
 public:
-	glm::vec4 specularProperty;
 	
 	// Class Constructor
 	PointLight() {
-		specularProperty = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		lightPosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		typeName = "Point";
 	}
 
 	PointLight(unsigned int lightID) :
 		Light(lightID) {
-		specularProperty = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		setLightPosition(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		typeName = "Point";
 	}
 
 	~PointLight() {};
@@ -78,30 +90,27 @@ public:
 		return this->lightPosition;
 	}
 
-	glm::vec4 getSpecularProperty() {
-		return this->specularProperty;
+	std::string getLightName() {
+		return typeName;
 	}
 
 	void setLightPosition(glm::vec4 lightPosition) {
 		this->lightPosition = lightPosition;
-	}
-	void setSpecularProperty(glm::vec4 specularProperty) {
-		this->specularProperty = specularProperty;
 	}
 
 };
 
 class DirectionalLight : public Light {
 public:
-
+	
 	glm::vec3 lightDirection;
-	glm::vec4 specularProperty;
 
 	DirectionalLight(unsigned int lightID)
 		: Light(lightID) {
 		lightDirection = glm::vec3(0.0f, -10.0f, 0.0f);
 		specularProperty = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		setLightPosition(glm::vec4(0.0f, 10.0f, 0.0f, 0.0f));
+		typeName = "Directional";
 	}
 
 	~DirectionalLight() {
@@ -114,8 +123,8 @@ public:
 	glm::vec3 getLightDirection() {
 		return this->lightDirection;
 	}
-	glm::vec4 getSpecularProperty() {
-		return this->specularProperty;
+	std::string getLightName() {
+		return typeName;
 	}
 	void setLightPosition(glm::vec4 lightPosition) {
 		this->lightPosition = lightPosition;
@@ -123,9 +132,6 @@ public:
 
 	void setLightDirection(glm::vec3 direction) {
 		lightDirection = direction;
-	}
-	void setSpecularProperty(glm::vec4 specularProperty) {
-		this->specularProperty = specularProperty;
 	}
 
 };
@@ -135,12 +141,12 @@ class PositionalLight : public Light {
 public:
 
 	glm::vec3 lightDirection;
-	glm::vec4 specularProperty;
 	
 	float cutoff;
 	unsigned int exponent;
 	float attenuationCoeff;
 	unsigned int attenuationType;
+	std::string attenTypeName;
 
 	PositionalLight(unsigned int lightID)
 		: Light(lightID) {
@@ -148,11 +154,11 @@ public:
 		cutoff = 45.0f;
 		exponent = 0.0f;
 		//spotDirection = glm::vec3(0.0f, 0.0f, -10.0f);
-		specularProperty = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		attenuationCoeff = 1;
 		attenuationType = 0x1207;
 		lightDirection = glm::vec3(0.0f, 0.0f, 0.0f);
 		setLightPosition(glm::vec4(0.0f, 0.0f, -10.0f, 1.0f));
+		typeName = "Positional";
 
 	}
 
@@ -181,11 +187,21 @@ public:
 	glm::vec3 getLightDirection() {
 		return this->lightDirection;
 	}
-	glm::vec4 getSpecularProperty() {
-		return this->specularProperty;
-	}
 	glm::vec4 getLightPosition() {
 		return this->lightPosition;
+	}
+	std::string getAttenName() {
+		if (attenuationType == 0) {
+			return std::string("CONSTANT");
+		}else if (attenuationType == 1) {
+			return std::string("LINEAR");
+		}else if (attenuationType == 2) {
+			return std::string("QUADRATIC");
+		}
+	}
+
+	std::string getLightName() {
+		return typeName;
 	}
 	// setters
 	void setAttenutationType(unsigned int attenuationType) {
@@ -202,9 +218,6 @@ public:
 	}
 	void setLightDirection(glm::vec3 direction) {
 		this->lightDirection = direction;
-	}
-	void setSpecularProperty(glm::vec4 specularProperty) {
-		this->specularProperty = specularProperty;
 	}
 	void setLightPosition(glm::vec4 lightPosition) {
 		this->lightPosition = lightPosition;
