@@ -22,6 +22,7 @@
 
 extern Camera m_camera;
 extern bool orthoOn;
+extern bool wireFrameOn;
 
 #include <GL/glew.h>
 #ifdef __APPLE__
@@ -643,9 +644,9 @@ void my_display_code()
 			ImGui::DragFloat("Z##scaleY", &loadedObjs[selected]->scale.Z, 0.02f, 0.0f, FLT_MAX, "%.04f");
 			ImGui::Text("Translate:");
 
-			ImGui::SliderFloat("X##translateX", &loadedObjs[selected]->translate.X, -180.0f, 180.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-			ImGui::SliderFloat("Y##translateY", &loadedObjs[selected]->translate.Y, -180.0f, 180.0f);
-			ImGui::SliderFloat("Z##translateZ", &loadedObjs[selected]->translate.Z, -180.0f, 180.0f);
+			ImGui::DragFloat("X##translateX", &loadedObjs[selected]->translate.X, 0.02f,-180.0f, 180.0f, "%.04f");            // Edit 1 float using a slider from 0.0f to 1.0f
+			ImGui::DragFloat("Y##translateY", &loadedObjs[selected]->translate.Y, 0.02f, -180.0f, 180.0f, "%.04f");
+			ImGui::DragFloat("Z##translateZ", &loadedObjs[selected]->translate.Z, 0.02f, -180.0f, 180.0f, "%.04f");
 
 			if (!loadedObjs.empty()) {
 				// Delete an Object
@@ -851,7 +852,7 @@ void my_display_code()
 				else if (currentAttenType2 == 2) {
 					posLight->setAttenutationType(ATTEN_TYPE + 2);
 				}
-				printf("Atten:%d\n", posLight->attenuationType);
+				/*printf("Atten:%d\n", posLight->attenuationType);*/
 			}
 		}
 		ImGui::Text("Position:");
@@ -1096,7 +1097,7 @@ void my_display_code()
 			ImGui::Begin("Edit Material Properties", &show_material_window);
 
 			std::vector<std::string> meshNames;
-			
+
 			//Creating Mesh Names
 			for (int i = 0; i < loadedObjs[selected]->LoadedMeshes.size(); i++) {
 				meshNames.push_back(loadedObjs[selected]->LoadedMeshes[i].MeshName);
@@ -1117,7 +1118,7 @@ void my_display_code()
 			ImGui::ColorEdit3("Color##emes", (float*)&(loadedObjs[selected]->LoadedMeshes[selected_mesh].MeshMaterial.Ke), ImGuiColorEditFlags_Float);
 
 			ImGui::Text("Shineness Property");
-			ImGui::SliderInt("Exponent##shin", (int*)&(loadedObjs[selected]->LoadedMeshes[selected_mesh].MeshMaterial.Ns), 0, 128, "%d");
+			ImGui::SliderInt("Shineness##shi", (int*)&(loadedObjs[selected]->LoadedMeshes[selected_mesh].MeshMaterial.Ns), 0, 128, "%d");
 
 			ImGui::End();
 
@@ -1278,46 +1279,72 @@ void glut_display_func()
 		for (int i = 0; i < loadedObjs[l]->LoadedMeshes.size(); i++) {
 			objl::Mesh currentMesh = loadedObjs[l]->LoadedMeshes[i];
 
-			for (int j = 0, ct = 0; j < currentMesh.Indices.size(); j += 3) {
+			if (!wireFrameOn) {
 
-				if (j % 6 == 0 && j != 0) {
-					ct += 3;
+				for (int j = 0, ct = 0; j < currentMesh.Indices.size(); j += 3) {
+
+					if (j % 6 == 0 && j != 0) {
+						ct += 3;
+					}
+
+					glBegin(GL_TRIANGLES);
+					//glNormal3i(currentMesh.Vertices[i].Normal.X, currentMesh.Vertices[i].Normal.Y, Loader.LoadedVertices[i].Normal.Z);
+					//std::cout << currentMesh.Indices[0] << " " << currentMesh.Vertices[i].Position.Y << " " << currentMesh.Vertices[i].Position.Z << std::endl;
+					glm::vec3 Ka(currentMesh.MeshMaterial.Ka.X, currentMesh.MeshMaterial.Ka.Y, currentMesh.MeshMaterial.Ka.Z);
+					glm::vec3 Kd(currentMesh.MeshMaterial.Kd.X, currentMesh.MeshMaterial.Kd.Y, currentMesh.MeshMaterial.Kd.Z);
+					glm::vec3 Ks(currentMesh.MeshMaterial.Ks.X, currentMesh.MeshMaterial.Ks.Y, currentMesh.MeshMaterial.Ks.Z);
+					glm::vec3 Ke(currentMesh.MeshMaterial.Ke.X, currentMesh.MeshMaterial.Ke.Y, currentMesh.MeshMaterial.Ke.Z);
+					glMaterialfv(GL_FRONT, GL_AMBIENT, glm::value_ptr(Ka));
+					glMaterialfv(GL_FRONT, GL_DIFFUSE, glm::value_ptr(Kd));
+					glMaterialfv(GL_FRONT, GL_SPECULAR, glm::value_ptr(Ks));
+					glMaterialfv(GL_FRONT, GL_EMISSION, glm::value_ptr(Ke));
+					glMateriali(GL_FRONT, GL_SHININESS, currentMesh.MeshMaterial.Ns);
+					glTexCoord2f(currentMesh.Vertices[currentMesh.Indices[j]].TextureCoordinate.X, currentMesh.Vertices[currentMesh.Indices[j]].TextureCoordinate.Y);
+					glNormal3f(currentMesh.Vertices[currentMesh.Indices[j]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Z);
+					glVertex3f(currentMesh.Vertices[currentMesh.Indices[j]].Position.X, currentMesh.Vertices[currentMesh.Indices[j]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j]].Position.Z);
+					glTexCoord2f(currentMesh.Vertices[currentMesh.Indices[j + 1]].TextureCoordinate.X, currentMesh.Vertices[currentMesh.Indices[j + 1]].TextureCoordinate.Y);
+					glNormal3f(currentMesh.Vertices[currentMesh.Indices[j + 1]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j + 1]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j + 1]].Normal.Z);
+					glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Z);
+					glTexCoord2f(currentMesh.Vertices[currentMesh.Indices[j + 2]].TextureCoordinate.X, currentMesh.Vertices[currentMesh.Indices[j + 2]].TextureCoordinate.Y);
+					glNormal3f(currentMesh.Vertices[currentMesh.Indices[j + 2]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j + 2]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j + 2]].Normal.Z);
+					glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Z);
+
+					glEnd();
+
+
 				}
 
-				glBegin(GL_TRIANGLES);
-				//glNormal3i(currentMesh.Vertices[i].Normal.X, currentMesh.Vertices[i].Normal.Y, Loader.LoadedVertices[i].Normal.Z);
-				//std::cout << currentMesh.Indices[0] << " " << currentMesh.Vertices[i].Position.Y << " " << currentMesh.Vertices[i].Position.Z << std::endl;
-				glm::vec3 Ka(currentMesh.MeshMaterial.Ka.X, currentMesh.MeshMaterial.Ka.Y, currentMesh.MeshMaterial.Ka.Z);
-				glm::vec3 Kd(currentMesh.MeshMaterial.Kd.X, currentMesh.MeshMaterial.Kd.Y, currentMesh.MeshMaterial.Kd.Z);
-				glm::vec3 Ks(currentMesh.MeshMaterial.Ks.X, currentMesh.MeshMaterial.Ks.Y, currentMesh.MeshMaterial.Ks.Z);
-				glm::vec3 Ke(currentMesh.MeshMaterial.Ke.X, currentMesh.MeshMaterial.Ke.Y, currentMesh.MeshMaterial.Ke.Z);
-				glMaterialfv(GL_FRONT, GL_AMBIENT, glm::value_ptr(Ka));
-				glMaterialfv(GL_FRONT, GL_DIFFUSE, glm::value_ptr(Kd));
-				glMaterialfv(GL_FRONT, GL_SPECULAR, glm::value_ptr(Ks));
-				glMaterialfv(GL_FRONT, GL_EMISSION, glm::value_ptr(Ke));
-				glMateriali(GL_FRONT, GL_SHININESS, currentMesh.MeshMaterial.Ns);
-				glTexCoord2f(currentMesh.Vertices[currentMesh.Indices[j]].TextureCoordinate.X, currentMesh.Vertices[currentMesh.Indices[j]].TextureCoordinate.Y);
-				glNormal3f(currentMesh.Vertices[currentMesh.Indices[j]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Z);
-				glVertex3f(currentMesh.Vertices[currentMesh.Indices[j]].Position.X, currentMesh.Vertices[currentMesh.Indices[j]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j]].Position.Z);
-				glTexCoord2f(currentMesh.Vertices[currentMesh.Indices[j + 1]].TextureCoordinate.X, currentMesh.Vertices[currentMesh.Indices[j + 1]].TextureCoordinate.Y);
-				glNormal3f(currentMesh.Vertices[currentMesh.Indices[j + 1]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j + 1]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j + 1]].Normal.Z);
-				glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Z);
-				glTexCoord2f(currentMesh.Vertices[currentMesh.Indices[j + 2]].TextureCoordinate.X, currentMesh.Vertices[currentMesh.Indices[j + 2]].TextureCoordinate.Y);
-				glNormal3f(currentMesh.Vertices[currentMesh.Indices[j + 2]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j + 2]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j + 2]].Normal.Z);
-				glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Z);
+			}
+			else {
+				glDisable(GL_LIGHTING);
+				for (int j = 0, ct = 0; j < currentMesh.Indices.size(); j += 3) {
 
-				glEnd();
+					if (j % 6 == 0 && j != 0) {
+						ct += 3;
+					}
 
+					glBegin(GL_LINE_LOOP);
+
+					glNormal3f(currentMesh.Vertices[currentMesh.Indices[j]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Z);
+					glVertex3f(currentMesh.Vertices[currentMesh.Indices[j]].Position.X, currentMesh.Vertices[currentMesh.Indices[j]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j]].Position.Z);
+
+					glNormal3f(currentMesh.Vertices[currentMesh.Indices[j + 1]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j + 1]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j + 1]].Normal.Z);
+					glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 1]].Position.Z);
+
+					glNormal3f(currentMesh.Vertices[currentMesh.Indices[j + 2]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j + 2]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j + 2]].Normal.Z);
+					glVertex3f(currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.X, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Y, currentMesh.Vertices[currentMesh.Indices[j + 2]].Position.Z);
+
+					glEnd();
+				}
 
 			}
 
 		}
-		glPopMatrix();
 
+		glPopMatrix();
 	}
 
-
-
+	glEnable(GL_LIGHTING);
 	ImGui_ImplOpenGL2_NewFrame();
 	ImGui_ImplGLUT_NewFrame();
 

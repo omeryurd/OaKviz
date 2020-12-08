@@ -32,5 +32,6 @@ float orthoRight = 16.0f;
 float orthoTop = 9.0f;
 float orthoBottom = -9.0f;
 bool orthoOn = false;
+bool wireFrameOn = false;
 float pan_x = 0;
 float pan_y = 0;

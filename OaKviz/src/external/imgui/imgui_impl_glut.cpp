@@ -146,17 +146,17 @@ void ImGui_ImplGLUT_KeyboardFunc(unsigned char c, int x, int y)
         io.KeysDown[c] = true;
     glm::vec3 view = glm::normalize(m_camera.GetViewDir());
     if (c == 'w') {
-        
+
         //ortho_camera.SetCameraView(ortho_camera.GetEye() + view2, ortho_camera.GetLookAt(), ortho_camera.GetUpVector());
         if (orthoOn) {
 
-            resizeX = orthoRight*0.05;
+            resizeX = orthoRight * 0.05;
             resizeY = orthoTop * 0.05;
-           // if (orthoLeft <= 0 && orthoBottom <= 0 && orthoRight >= 0 && orthoTop >= 0) {
-                orthoLeft += resizeX;
-                orthoBottom += resizeY;
-                orthoRight -= resizeX;
-                orthoTop -= resizeY;
+            // if (orthoLeft <= 0 && orthoBottom <= 0 && orthoRight >= 0 && orthoTop >= 0) {
+            orthoLeft += resizeX;
+            orthoBottom += resizeY;
+            orthoRight -= resizeX;
+            orthoTop -= resizeY;
             //}
         }
         else {
@@ -165,16 +165,16 @@ void ImGui_ImplGLUT_KeyboardFunc(unsigned char c, int x, int y)
 
     }
     if (c == 's') {
-       
+
         //ortho_camera.SetCameraView(ortho_camera.GetEye() - view2, ortho_camera.GetLookAt(), ortho_camera.GetUpVector());
         if (orthoOn) {
             resizeX = -orthoRight * 0.05;
             resizeY = -orthoTop * 0.05;
-           // if (orthoLeft <= 0 && orthoBottom <= 0 && orthoRight >= 0 && orthoTop >= 0) {
-                orthoLeft += resizeX;
-                orthoBottom += resizeY;
-                orthoRight -= resizeX;
-                orthoTop -= resizeY;
+            // if (orthoLeft <= 0 && orthoBottom <= 0 && orthoRight >= 0 && orthoTop >= 0) {
+            orthoLeft += resizeX;
+            orthoBottom += resizeY;
+            orthoRight -= resizeX;
+            orthoTop -= resizeY;
             //}
         }
         else {
@@ -188,29 +188,35 @@ void ImGui_ImplGLUT_KeyboardFunc(unsigned char c, int x, int y)
         m_camera.SetCameraView(m_camera.GetEye(), m_camera.GetLookAt(), m_camera.GetUpVector());
         orthoOn = false;
     }
-    if (c == '1') {
+    if (c == 't') {
         ortho_camera.SetCameraView(glm::vec3(0, abs(m_camera.GetEye().y), 0), glm::vec3(0, -abs(m_camera.GetEye().y), 0), glm::vec3(0.0f, 0.0f, -1.0f));
         orthoOn = true;
     }
-    if (c == '2') {
+    if (c == 'b') {
         ortho_camera.SetCameraView(glm::vec3(0, -abs(m_camera.GetEye().y), 0), glm::vec3(0.0f, abs(m_camera.GetEye().y), 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
         orthoOn = true;
     }
-    if (c == '3') {
+    if (c == 'r') {
         ortho_camera.SetCameraView(glm::vec3(0, 0, abs(m_camera.GetEye().z)), glm::vec3(0, 0, -abs(m_camera.GetEye().z)), glm::vec3(0.0f, 1.0f, 0.0f));
         orthoOn = true;
     }
-    if (c == '4') {
+    if (c == 'l') {
         ortho_camera.SetCameraView(glm::vec3(0, 0, -abs(m_camera.GetEye().z)), glm::vec3(0, 0, abs(m_camera.GetEye().z)), glm::vec3(0.0f, 1.0f, 0.0f));
         orthoOn = true;
     }
-    if (c == '5') {
+    if (c == 'F') {
         ortho_camera.SetCameraView(glm::vec3(abs(m_camera.GetEye().x), 0, 0), glm::vec3(-abs(m_camera.GetEye().x), 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
         orthoOn = true;
     }
-    if (c == '6') {
+    if (c == 'B') {
         ortho_camera.SetCameraView(glm::vec3(-abs(m_camera.GetEye().x), 0, 0), glm::vec3(abs(m_camera.GetEye().x), 0, 0), glm::vec3(0.0f, 1.0f, 0.0f));
         orthoOn = true;
+    }
+    if (c == '-') {
+        wireFrameOn = true;
+    }
+    if (c == '+') {
+        wireFrameOn = false;
     }
 
     glutPostRedisplay();
