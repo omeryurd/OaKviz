@@ -80,47 +80,47 @@ unsigned int cubemapTexture;
 unsigned int loadCubemap(std::vector<std::string> faces);
 float skyboxVertices[] = {
 	// positions          
-	-100.0f,  100.0f, -100.0f,
-	-100.0f, -100.0f, -100.0f,
-	 100.0f, -100.0f, -100.0f,
-	 100.0f, -100.0f, -100.0f,
-	 100.0f,  100.0f, -100.0f,
-	-100.0f,  100.0f, -100.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
 
-	-100.0f, -100.0f,  100.0f,
-	-100.0f, -100.0f, -100.0f,
-	-100.0f,  100.0f, -100.0f,
-	-100.0f,  100.0f, -100.0f,
-	-100.0f,  100.0f,  100.0f,
-	-100.0f, -100.0f,  100.0f,
+	-1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
 
-	 100.0f, -100.0f, -100.0f,
-	 100.0f, -100.0f,  100.0f,
-	 100.0f,  100.0f,  100.0f,
-	 100.0f,  100.0f,  100.0f,
-	 100.0f,  100.0f, -100.0f,
-	 100.0f, -100.0f, -100.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
 
-	-100.0f, -100.0f,  100.0f,
-	-100.0f,  100.0f,  100.0f,
-	 100.0f,  100.0f,  100.0f,
-	 100.0f,  100.0f,  100.0f,
-	 100.0f, -100.0f,  100.0f,
-	-100.0f, -100.0f,  100.0f,
+	-1.0f, -1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
 
-	-100.0f,  100.0f, -100.0f,
-	 100.0f,  100.0f, -100.0f,
-	 100.0f,  100.0f,  100.0f,
-	 100.0f,  100.0f,  100.0f,
-	-100.0f,  100.0f,  100.0f,
-	-100.0f,  100.0f, -100.0f,
+	-1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f, -1.0f,
 
-	-100.0f, -100.0f, -100.0f,
-	-100.0f, -100.0f,  100.0f,
-	 100.0f, -100.0f, -100.0f,
-	 100.0f, -100.0f, -100.0f,
-	-100.0f, -100.0f,  100.0f,
-	 100.0f, -100.0f,  100.0f
+	-1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f
 };
 //-------------
 
@@ -147,18 +147,18 @@ int main(int argc, char** argv)
 	//    "skybox/front.jpg",
 	//    "skybox/back.jpg"
 	//};
+
+	//cubemapTexture = loadCubemap(faces);
 	//skyboxShader = new Shader("6.1.skybox.vs", "6.1.skybox.fs");
-	//unsigned int skyboxVAO, skyboxVBO;
+	//skyboxShader->use();
+	//skyboxShader->setInt("skybox", 0);
 	//glGenVertexArrays(1, &skyboxVAO);
 	//glGenBuffers(1, &skyboxVBO);
 	//glBindVertexArray(skyboxVAO);
-	//glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+	//glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);	//glEnable
 	//glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-	//glEnableVertexAttribArray(0);
+	// VertexAttribArray(0);
 	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	//cubemapTexture = loadCubemap(faces);
-	//skyboxShader->use();
-	//skyboxShader->setInt("skybox", 0);
 	//-----
    /* PointLight *pLight;
 	pLight = new PointLight(GL_LIGHT0);
@@ -308,7 +308,7 @@ void init_other() {
 bool loadTexture(std::string path, objl::Loader*& objectModel) {
 	int x, y, n;
 	stbi_set_flip_vertically_on_load(true);
-	unsigned char* data = stbi_load(path.c_str(), &x, &y, &n, STBI_rgb_alpha);
+	unsigned char* data = stbi_load(path.c_str(), &x, &y, &n, STBI_rgb);
 	unsigned int* texId;
 	texId = new unsigned int;
 	glGenTextures(static_cast<GLsizei>(1), texId);
@@ -331,9 +331,9 @@ bool loadTexture(std::string path, objl::Loader*& objectModel) {
 		// We will use linear interpolation for minifying filter
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		// Texture specification
-		//glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA16, x, y); 
-		//glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, x, y, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glTexImage2D(GL_TEXTURE_2D, 0, n, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);// Texture specification.
+		/*glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, x, y);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, x, y, GL_RGB, GL_UNSIGNED_BYTE, data);*/
+		glTexImage2D(GL_TEXTURE_2D, 0, n, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);// Texture specification.
 		glGenerateMipmap(GL_TEXTURE_2D);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -387,7 +387,7 @@ unsigned int loadCubemap(std::vector<std::string> faces)
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glEnable(GL_TEXTURE_CUBE_MAP);
+
 	return textureID;
 }
 
@@ -561,6 +561,14 @@ void deleteObjPopUp(std::vector<objl::Loader*>& objects, unsigned int index) {
 }
 glm::vec4 tempLightDir(1.0f);
 
+static auto vector_getter = [](void* vec, int idx, const char** out_text)
+{
+	auto& vector = *static_cast<std::vector<std::string>*>(vec);
+	if (idx < 0 || idx >= static_cast<int>(vector.size())) { return false; }
+	*out_text = vector.at(idx).c_str();
+	return true;
+};
+
 void my_display_code()
 {
 	static imgui_addons::ImGuiFileBrowser file_dialog2;
@@ -569,6 +577,7 @@ void my_display_code()
 	static float  ligtRotX = 0.0f;
 	static float  ligtRotY = 0.0f;
 	static float  ligtRotZ = 0.0f;
+	static int selected_mesh = 0;
 	static float cutoff;
 	//--------------------------------
 
@@ -585,6 +594,7 @@ void my_display_code()
 				selected = n;
 				selectedIndex = n;
 				selectedLight = -1;
+				selected_mesh = 0;
 			}
 
 		}
@@ -597,9 +607,6 @@ void my_display_code()
 		for (int n = 0; n < lightVector.size(); n++)
 		{
 			lightName.append(std::to_string(n));
-			lightName += " (";
-			lightName.append(lightVector[n]->typeName);
-			lightName += ")";
 			char buf[32];
 			sprintf(buf, "Object %d", n);
 			if (ImGui::Selectable(lightName.c_str(), selectedLight == n)) {
@@ -636,7 +643,6 @@ void my_display_code()
 			ImGui::SliderFloat("Y##translateY", &loadedObjs[selected]->translate.Y, -180.0f, 180.0f);
 			ImGui::SliderFloat("Z##translateZ", &loadedObjs[selected]->translate.Z, -180.0f, 180.0f);
 
-
 			if (!loadedObjs.empty()) {
 				// Delete an Object
 				if (ImGui::Button("Delete Object.."))
@@ -672,6 +678,9 @@ void my_display_code()
 					if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
 					ImGui::EndPopup();
 				}
+
+
+
 				//------ Delete object ends
 				if (objectExists) {
 					ImGui::Separator();
@@ -823,22 +832,7 @@ void my_display_code()
 
 		}
 		if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
-			static const char* attenTypes[3] = { "CONSTANT", "LINEAR", "QUADRATIC" };
-			static int currentAttenType = posLight->attenuationType - ATTEN_TYPE;
 			ImGui::SliderFloat("Cutoff Angle", &posLight->cutoff, 0.0f, 89.99f);
-			ImGui::SliderInt("Exponent", (int*)(&posLight->exponent), 0, 128, "%d");
-			ImGui::Text("Positional Light - Attenuation Type");
-			if (ImGui::Combo("Type", &currentAttenType, attenTypes, IM_ARRAYSIZE(attenTypes))) {
-				if (currentAttenType == 0) {
-					posLight->setAttenutationType(ATTEN_TYPE);
-				}
-				else if (currentAttenType == 1) {
-					posLight->setAttenutationType(ATTEN_TYPE + 1);
-				}
-				else if (currentAttenType == 2) {
-					posLight->setAttenutationType(ATTEN_TYPE + 2);
-				}
-			}
 		}
 		ImGui::Text("Position:");
 
@@ -860,10 +854,6 @@ void my_display_code()
 			ImGui::DragFloat("Z##lightDirZ", &dirLight1->lightDirection.z, 0.02f, -FLT_MAX, FLT_MAX, "%.04f");
 		}
 
-		ImGui::Text("Light Intensity Properties:");
-		ImGui::ColorEdit4("Ambient##ambientP", (float*)&lightVector[selectedLight]->ambientProperty, ImGuiColorEditFlags_Float);
-		ImGui::ColorEdit4("Diffuse##diffuseP", (float*)&lightVector[selectedLight]->diffuseProperty, ImGuiColorEditFlags_Float);
-		ImGui::ColorEdit4("Specular##specularP", (float*)&lightVector[selectedLight]->specularProperty, ImGuiColorEditFlags_Float);
 	}
 
 	//
@@ -1027,7 +1017,6 @@ void my_display_code()
 			ImGui::Text("Positional Light - Attenuation Coefficient");
 			ImGui::SliderFloat("Coefficient", &attenCoef, 1.0f, 60.0f, "%f");
 
-
 			if (ImGui::Button("Create Positional Light")) {
 
 				ImGui::OpenPopup("Maximum Lights Warning!");
@@ -1074,6 +1063,43 @@ void my_display_code()
 		ImGui::End();
 	}
 
+	if (selected >= 0 && !loadedObjs.empty()) {
+
+		ImGui::Checkbox("Edit Material Properties", &show_material_window);
+
+		if (show_material_window)
+		{
+			ImGui::Begin("Edit Material Properties", &show_material_window);
+
+			std::vector<std::string> meshNames;
+			
+			//Creating Mesh Names
+			for (int i = 0; i < loadedObjs[selected]->LoadedMeshes.size(); i++) {
+				meshNames.push_back(loadedObjs[selected]->LoadedMeshes[i].MeshName);
+			}
+
+			ImGui::ListBox("Mesh Names", &selected_mesh, vector_getter, static_cast<void*>(&meshNames), meshNames.size(), 5);
+
+			ImGui::Text("Ambient Property");
+			ImGui::ColorEdit3("Color##amb", (float*)&(loadedObjs[selected]->LoadedMeshes[selected_mesh].MeshMaterial.Ka), ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Diffuse Property");
+			ImGui::ColorEdit3("Color##diff", (float*)&(loadedObjs[selected]->LoadedMeshes[selected_mesh].MeshMaterial.Kd), ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Specular Property");
+			ImGui::ColorEdit3("Color##spec", (float*)&(loadedObjs[selected]->LoadedMeshes[selected_mesh].MeshMaterial.Ks), ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Emmisive Property");
+			ImGui::ColorEdit3("Color##emes", (float*)&(loadedObjs[selected]->LoadedMeshes[selected_mesh].MeshMaterial.Ke), ImGuiColorEditFlags_Float);
+
+			ImGui::Text("Shineness Property");
+			ImGui::SliderInt("Exponent##shin", (int*)&(loadedObjs[selected]->LoadedMeshes[selected_mesh].MeshMaterial.Ns), 0, 128, "%d");
+
+			ImGui::End();
+
+		}
+	}
+
 	ImGui::End();
 
 	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
@@ -1095,17 +1121,42 @@ void glut_display_func()
 	//else {
 	//	gluPerspective(45, (16.0 / 9.0), 0.1, 150);
 	//}
-	
+
 	ImGuiIO& io = ImGui::GetIO();
 	glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	
+	//glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context where shaders may be bound, but prefer using the GL3+ code
+	//Skybox
+	//draw scene as normal
+	//skyboxShader->use();
+	//skyboxShader->setInt("skybox", 0);
+	//// draw skybox as last
+	//glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
+	//skyboxShader->use();
+	//glm::mat4 view = m_camera.GetViewMatrix();
+	//glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)1280 / (float)720, 0.1f, 100.0f);
+	//view = glm::mat4(glm::mat3(m_camera.GetViewMatrix())); // remove translation from the view matrix
+	//skyboxShader->setMat4("view", view);
+	//skyboxShader->setMat4("projection", projection);
+	//// skybox cube
+	//glBindVertexArray(skyboxVAO);
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+	//glDrawArrays(GL_TRIANGLES, 0, 36);
+	//glBindVertexArray(0);
+	//glDepthFunc(GL_LESS); // set depth function back to default
+	//glDeleteVertexArrays(1, &skyboxVAO);
+	//glDeleteBuffers(1, &skyboxVAO);
+	//----------
+
 	glColor3f(1.0, 0.0, 0.0);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	myLookAt();
+
 	glDisable(GL_LIGHTING);
+
 	//Grid -------
 	GLfloat grid2x2[2][2][3] = {
   {{-2.0, -2.0, 0.0}, {4.0, -2.0, 0.0}},
@@ -1208,9 +1259,6 @@ void glut_display_func()
 				if (j % 6 == 0 && j != 0) {
 					ct += 3;
 				}
-				//if (loadedObjs[selected]->LoadedMeshes[selectedMesh]) {
-
-				//}
 
 				glBegin(GL_TRIANGLES);
 				//glNormal3i(currentMesh.Vertices[i].Normal.X, currentMesh.Vertices[i].Normal.Y, Loader.LoadedVertices[i].Normal.Z);
@@ -1218,9 +1266,11 @@ void glut_display_func()
 				glm::vec3 Ka(currentMesh.MeshMaterial.Ka.X, currentMesh.MeshMaterial.Ka.Y, currentMesh.MeshMaterial.Ka.Z);
 				glm::vec3 Kd(currentMesh.MeshMaterial.Kd.X, currentMesh.MeshMaterial.Kd.Y, currentMesh.MeshMaterial.Kd.Z);
 				glm::vec3 Ks(currentMesh.MeshMaterial.Ks.X, currentMesh.MeshMaterial.Ks.Y, currentMesh.MeshMaterial.Ks.Z);
+				glm::vec3 Ke(currentMesh.MeshMaterial.Ke.X, currentMesh.MeshMaterial.Ke.Y, currentMesh.MeshMaterial.Ke.Z);
 				glMaterialfv(GL_FRONT, GL_AMBIENT, glm::value_ptr(Ka));
 				glMaterialfv(GL_FRONT, GL_DIFFUSE, glm::value_ptr(Kd));
 				glMaterialfv(GL_FRONT, GL_SPECULAR, glm::value_ptr(Ks));
+				glMaterialfv(GL_FRONT, GL_EMISSION, glm::value_ptr(Ke));
 				glMateriali(GL_FRONT, GL_SHININESS, currentMesh.MeshMaterial.Ns);
 				glTexCoord2f(currentMesh.Vertices[currentMesh.Indices[j]].TextureCoordinate.X, currentMesh.Vertices[currentMesh.Indices[j]].TextureCoordinate.Y);
 				glNormal3f(currentMesh.Vertices[currentMesh.Indices[j]].Normal.X, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Y, currentMesh.Vertices[currentMesh.Indices[j]].Normal.Z);
@@ -1248,7 +1298,7 @@ void glut_display_func()
 	ImGui_ImplGLUT_NewFrame();
 
 	my_display_code();
-	
+
 	for (int i = 0; i < lightVector.size(); i++) {
 		createLight(lightVector[i]);
 	}
@@ -1257,19 +1307,21 @@ void glut_display_func()
 
 
 	if (selectedLight > -1) {
-		//glDisable(GL_DEPTH_TEST);
 		glPushMatrix();
+
+
+
 		glColor4f(0.5, 0.6, 1, 1);
 		glPointSize(10);
 		if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
 			//std::cout << pointLight->getLightDirection().x << " " << pointLight->getLightDirection().y << " " << pointLight->getLightDirection().z << std::endl;
 			glColor4f(0.9, 0.7, 0.1, 1);
+
 			glBegin(GL_POINTS);
+
 			glVertex4fv(glm::value_ptr(glm::vec4(posLight->getLightDirection(), 1.0f)));
-			glColor4f(0.9, 0.6, 0.7, 1);
-			glVertex4fv(glm::value_ptr(posLight->getLightPosition()));
 			glEnd();
-			glColor4f(1.0, 0.0, 0.3, 1);
+			glColor4f(0.5, 0.6, 1, 1);
 			glBegin(GL_LINES);
 			glVertex4fv(glm::value_ptr(glm::vec4(posLight->getLightDirection(), 1.0f)));
 			glVertex4fv(glm::value_ptr(posLight->getLightPosition()));
@@ -1305,31 +1357,10 @@ void glut_display_func()
 
 		glPopMatrix();
 	}
-	//---------- SkyBox
-	//glm::mat4 view = m_camera.GetViewMatrix();
-	//glm::mat4 projection;
-	//glGetFloatv(GL_PROJECTION_MATRIX, glm::value_ptr(projection));
-	//// draw skybox as last
-	//glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
-	//skyboxShader->use();
-	//view = glm::mat4(glm::mat3(m_camera.GetViewMatrix())); // remove translation from the view matrix
-	//skyboxShader->setMat4("view", view);
-	//skyboxShader->setMat4("projection", projection);
-	//// skybox cube
-	//glBindVertexArray(skyboxVAO);
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-	//glDrawArrays(GL_TRIANGLES, 0, 36);
-	//glBindVertexArray(0);
-	//glDepthFunc(GL_LESS); // set depth function back to default
-	//glDisable(GL_LIGHTING);
-	//------------
 	// Rendering
-	//glEnable(GL_DEPTH_TEST);
 	ImGui::Render();
 
 	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
-
 	glEnable(GL_LIGHTING);
 
 
