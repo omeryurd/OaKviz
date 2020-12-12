@@ -1,9 +1,3 @@
-// dear imgui: standalone example application for GLUT/FreeGLUT + OpenGL2, using legacy fixed pipeline
-// If you are new to dear imgui, see examples/README.txt and documentation at the top of imgui.cpp.
-
-// !!! GLUT/FreeGLUT IS OBSOLETE SOFTWARE. Using GLUT is not recommended unless you really miss the 90's. !!!
-// !!! If someone or something is teaching you GLUT in 2020, you are being abused. Please show some resistance. !!!
-// !!! Nowadays, prefer using GLFW or SDL instead!
 #include "glm/vec3.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/transform.hpp"
@@ -61,6 +55,7 @@ GLfloat colors[] = { 1.0, 0.5, 0, 0.5, 0, 0,0.4, 0, 0, 0.2, 0, 0,.3, 0, 0, .7, 0
 GLfloat light_position[] = { 0,0, -10 , 1.0 };
 objl::Vector3 mRotate(0.0, 0.0, 0.0);
 objl::Vector3 mTranslate(0.0, 0.0, 0.0);
+glm::vec4 tempLightDir(1.0f);
 float angleM = 0;
 std::vector<objl::Loader*> loadedObjs;
 static float xCoord = 0.0f;
@@ -72,9 +67,6 @@ static int selected = 0;
 static int selectedLight = -1;
 std::vector<Light*> lightVector;
 
-//DirectionalLight dirLight;
-//PositionalLight posLight;
-//----SkyBox related
 Shader* skyboxShader;
 unsigned int skyboxVAO, skyboxVBO;
 unsigned int cubemapTexture;
@@ -123,12 +115,7 @@ float skyboxVertices[] = {
 	-1.0f, -1.0f,  1.0f,
 	 1.0f, -1.0f,  1.0f
 };
-//-------------
 
-// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
-// - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-// Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
 
 int main(int argc, char** argv)
 {
@@ -138,43 +125,6 @@ int main(int argc, char** argv)
 	init_window(argc, argv);
 
 	init_other();
-	//Skybox
-	//std::vector<std::string> faces
-	//{
-	//    "skybox/right.jpg",
-	//    "skybox/left.jpg",
-	//    "skybox/top.jpg",
-	//    "skybox/bottom.jpg",
-	//    "skybox/front.jpg",
-	//    "skybox/back.jpg"
-	//};
-
-	//cubemapTexture = loadCubemap(faces);
-	//skyboxShader = new Shader("6.1.skybox.vs", "6.1.skybox.fs");
-	//skyboxShader->use();
-	//skyboxShader->setInt("skybox", 0);
-	//glGenVertexArrays(1, &skyboxVAO);
-	//glGenBuffers(1, &skyboxVBO);
-	//glBindVertexArray(skyboxVAO);
-	//glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);	//glEnable
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-	// VertexAttribArray(0);
-	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	//-----
-   /* PointLight *pLight;
-	pLight = new PointLight(GL_LIGHT0);
-	DirectionalLight* dLight;
-	dLight = new DirectionalLight(GL_LIGHT1);
-	PositionalLight* poLight;
-	poLight = new PositionalLight(GL_LIGHT2);*/
-
-	/*lightVector.push_back(new PointLight(GL_LIGHT0));
-	lightVector.push_back(new DirectionalLight(GL_LIGHT1));
-	lightVector.push_back(new PointLight(GL_LIGHT3));
-	lightVector.push_back(new DirectionalLight(GL_LIGHT4));
-	lightVector.push_back(new PositionalLight(GL_LIGHT5));
-	lightVector.push_back(new PointLight(GL_LIGHT6));
-	lightVector.push_back(new DirectionalLight(GL_LIGHT7));*/
 
 	glutDisplayFunc(glut_display_func);
 	glMatrixMode(GL_MODELVIEW);
@@ -182,41 +132,17 @@ int main(int argc, char** argv)
 
 	glutDisplayFunc(glut_display_func);
 
-
-	// Setup GLUT display function
-	// We will also call ImGui_ImplGLUT_InstallFuncs() to get all the other functions installed for us,
-	// otherwise it is possible to install our own functions and call the imgui_impl_glut.h functions ourselves.
-
-
-	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 
 	// Setup Dear ImGui style
-	//ImGui::StyleColorsDark();
-	ImGui::StyleColorsDark();
+	ImGui::StyleColorsLight();
 
 	// Setup Platform/Renderer bindings
 	ImGui_ImplGLUT_Init();
 	ImGui_ImplGLUT_InstallFuncs();
 	ImGui_ImplOpenGL2_Init();
-
-	// Load Fonts
-	// - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-	// - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-	// - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-	// - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-	// - Read 'docs/FONTS.md' for more instructions and details.
-	// - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-	//io.Fonts->AddFontDefault();
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-	//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-	//IM_ASSERT(font != NULL);
 
 	glutMainLoop();
 
@@ -230,8 +156,6 @@ int main(int argc, char** argv)
 		delete loadedObjs[i];
 	}
 
-
-
 	return 0;
 }
 
@@ -243,6 +167,8 @@ void init_window(int argc, char** argv) {
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 #endif
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_MULTISAMPLE | GLUT_DEPTH);
+	glBlendFunc(GL_SRC_ALPHA_SATURATE, GL_ONE);
+	glEnable(GL_BLEND);
 	glutInitWindowSize(1280, 720);
 	glutCreateWindow("OakViz");
 	GLenum err = glewInit();
@@ -316,14 +242,6 @@ bool loadTexture(std::string path, objl::Loader*& objectModel) {
 
 	if (data != nullptr)
 	{
-		// Convert every colour component into unsigned byte.If your image contains
-		// alpha channel you can replace IL_RGB with IL_RGBA
-		//success = ilConvertImage(IL_RGB, IL_UNSIGNED_BYTE);
-		/*if (!success)
-		{
-			abortGLInit("Couldn't convert image");
-			return -1;
-		}*/
 		// Binding of texture name
 		glBindTexture(GL_TEXTURE_2D, *texId);
 		// redefine standard texture values
@@ -332,8 +250,6 @@ bool loadTexture(std::string path, objl::Loader*& objectModel) {
 		// We will use linear interpolation for minifying filter
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		// Texture specification
-		/*glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, x, y);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, x, y, GL_RGB, GL_UNSIGNED_BYTE, data);*/
 		glTexImage2D(GL_TEXTURE_2D, 0, n, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);// Texture specification.
 		glGenerateMipmap(GL_TEXTURE_2D);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -543,9 +459,6 @@ void deleteObjPopUp(std::vector<objl::Loader*>& objects, unsigned int index) {
 		ImGui::Text("Are you sure you want to delete the object?\n\n");
 		ImGui::Separator();
 
-		//static int unused_i = 0;
-		//ImGui::Combo("Combo", &unused_i, "Delete\0Delete harder\0");
-
 		static bool dont_ask_me_next_time = false;
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
 		ImGui::Checkbox("Don't ask me next time", &dont_ask_me_next_time);
@@ -561,7 +474,6 @@ void deleteObjPopUp(std::vector<objl::Loader*>& objects, unsigned int index) {
 		ImGui::EndPopup();
 	}
 }
-glm::vec4 tempLightDir(1.0f);
 
 static auto vector_getter = [](void* vec, int idx, const char** out_text)
 {
@@ -581,12 +493,10 @@ void my_display_code()
 	static float  ligtRotZ = 0.0f;
 	static int selected_mesh = 0;
 	static float cutoff;
-	//--------------------------------
 
 	int selectedIndex = 0;
 
 	ImGui::Begin("OaKviz Editing Panel");
-	//ImGui::TextColored(ImVec4(0.753, 0.753, 0.753, 1.0f), "Loaded Objects:");
 	if (ImGui::CollapsingHeader("Loaded Objects", ImGuiTreeNodeFlags_None)) {
 		for (int n = 0; n < loadedObjs.size(); n++)
 		{
@@ -644,7 +554,7 @@ void my_display_code()
 			ImGui::DragFloat("Z##scaleY", &loadedObjs[selected]->scale.Z, 0.02f, 0.0f, FLT_MAX, "%.04f");
 			ImGui::Text("Translate:");
 
-			ImGui::DragFloat("X##translateX", &loadedObjs[selected]->translate.X, 0.02f,-180.0f, 180.0f, "%.04f");            // Edit 1 float using a slider from 0.0f to 1.0f
+			ImGui::DragFloat("X##translateX", &loadedObjs[selected]->translate.X, 0.02f, -180.0f, 180.0f, "%.04f");            // Edit 1 float using a slider from 0.0f to 1.0f
 			ImGui::DragFloat("Y##translateY", &loadedObjs[selected]->translate.Y, 0.02f, -180.0f, 180.0f, "%.04f");
 			ImGui::DragFloat("Z##translateZ", &loadedObjs[selected]->translate.Z, 0.02f, -180.0f, 180.0f, "%.04f");
 
@@ -661,9 +571,6 @@ void my_display_code()
 				{
 					ImGui::Text("Are you sure you want to delete the object?\n\n");
 					ImGui::Separator();
-
-					//static int unused_i = 0;
-					//ImGui::Combo("Combo", &unused_i, "Delete\0Delete harder\0");
 
 					static bool dont_ask_me_next_time = false;
 					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
@@ -751,7 +658,6 @@ void my_display_code()
 					glm::mat4x4 rotMat(1.0f);
 					rotMat = glm::rotate(glm::radians(ligtRotX), glm::vec3(1.0, 0.0, 0.0));
 
-					//std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
 					glm::mat4x4 translateLight = glm::translate(glm::vec3(-posLight->getLightPosition()));
 					glm::mat4x4 translateLightBack = glm::translate(glm::vec3(posLight->getLightPosition()));
 					posLight->setLightDirection(translateLightBack * rotMat * translateLight * tempLightDir);
@@ -760,7 +666,6 @@ void my_display_code()
 					glm::mat4x4 rotMat(1.0f);
 					rotMat = glm::rotate(glm::radians(ligtRotX), glm::vec3(1.0, 0.0, 0.0));
 
-					//std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
 					glm::mat4x4 translateLight = glm::translate(glm::vec3(-dirLight->getLightPosition()));
 					glm::mat4x4 translateLightBack = glm::translate(glm::vec3(dirLight->getLightPosition()));
 					dirLight->setLightDirection(translateLightBack * rotMat * translateLight * tempLightDir);
@@ -784,7 +689,6 @@ void my_display_code()
 					glm::mat4x4 rotMat(1.0f);
 					rotMat = glm::rotate(glm::radians(ligtRotY), glm::vec3(0.0, 1.0, 0.0));
 
-					//std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
 					glm::mat4x4 translateLight = glm::translate(glm::vec3(-posLight->getLightPosition()));
 					glm::mat4x4 translateLightBack = glm::translate(glm::vec3(posLight->getLightPosition()));
 					posLight->setLightDirection(translateLightBack * rotMat * translateLight * tempLightDir);
@@ -793,7 +697,6 @@ void my_display_code()
 					glm::mat4x4 rotMat(1.0f);
 					rotMat = glm::rotate(glm::radians(ligtRotZ), glm::vec3(0.0, 1.0, 0.0)); // Z
 
-					//std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
 					glm::mat4x4 translateLight = glm::translate(glm::vec3(-dirLight->getLightPosition()));
 					glm::mat4x4 translateLightBack = glm::translate(glm::vec3(dirLight->getLightPosition()));
 					dirLight->setLightDirection(translateLightBack * rotMat * translateLight * tempLightDir);
@@ -816,7 +719,6 @@ void my_display_code()
 					glm::mat4x4 rotMat(1.0f);
 					rotMat = glm::rotate(glm::radians(ligtRotZ), glm::vec3(0.0, 0.0, 1.0)); // Y
 
-					//std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
 					glm::mat4x4 translateLight = glm::translate(glm::vec3(-posLight->getLightPosition()));
 					glm::mat4x4 translateLightBack = glm::translate(glm::vec3(posLight->getLightPosition()));
 					posLight->setLightDirection(translateLightBack * rotMat * translateLight * tempLightDir);
@@ -825,7 +727,6 @@ void my_display_code()
 					glm::mat4x4 rotMat(1.0f);
 					rotMat = glm::rotate(glm::radians(ligtRotZ), glm::vec3(0.0, 0.0, 1.0));
 
-					//std::cout << "ligtRotX:" << ligtRotX << "LightRotY " << ligtRotY << "LightRotZ" << ligtRotZ << std::endl;
 					glm::mat4x4 translateLight = glm::translate(glm::vec3(-dirLight->getLightPosition()));
 					glm::mat4x4 translateLightBack = glm::translate(glm::vec3(dirLight->getLightPosition()));
 					dirLight->setLightDirection(translateLightBack * rotMat * translateLight * tempLightDir);
@@ -852,7 +753,6 @@ void my_display_code()
 				else if (currentAttenType2 == 2) {
 					posLight->setAttenutationType(ATTEN_TYPE + 2);
 				}
-				/*printf("Atten:%d\n", posLight->attenuationType);*/
 			}
 		}
 		ImGui::Text("Position:");
@@ -881,13 +781,9 @@ void my_display_code()
 
 	}
 
-	//
-
 	ImGui::Separator();
 	ImGui::Text("OaK Editing Panel");
 	ImGui::Checkbox("Create Light", &show_lighting_window);
-
-	// TODO : Reset Button Function for All the Light Creation Values
 
 	if (show_lighting_window)
 	{
@@ -1038,7 +934,6 @@ void my_display_code()
 			ImGui::Text("Positional Light - Attenuation Type");
 			ImGui::Combo("Type", &currentAttenType, attenTypes, IM_ARRAYSIZE(attenTypes));
 
-			// TODO: What is the Max Attenuation Coefficient?
 			ImGui::Text("Positional Light - Attenuation Coefficient");
 			ImGui::SliderFloat("Coefficient", &attenCoef, 1.0f, 60.0f, "%f");
 
@@ -1127,11 +1022,6 @@ void my_display_code()
 
 	ImGui::End();
 
-	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-	if (show_demo_window)
-		ImGui::ShowDemoWindow(&show_demo_window);
-
-
 	showMainMenu();
 }
 
@@ -1140,40 +1030,10 @@ void glut_display_func()
 	// Start the Dear ImGui frame
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	//if (orthoOn) {
-	//	glOrtho(-16.0f, 16.0f, -9.0f, 9.0f, -30.0, 30.0f);
-	//}
-	//else {
-	//	gluPerspective(45, (16.0 / 9.0), 0.1, 150);
-	//}
 
 	ImGuiIO& io = ImGui::GetIO();
 	glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	//glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context where shaders may be bound, but prefer using the GL3+ code
-	//Skybox
-	//draw scene as normal
-	//skyboxShader->use();
-	//skyboxShader->setInt("skybox", 0);
-	//// draw skybox as last
-	//glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
-	//skyboxShader->use();
-	//glm::mat4 view = m_camera.GetViewMatrix();
-	//glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)1280 / (float)720, 0.1f, 100.0f);
-	//view = glm::mat4(glm::mat3(m_camera.GetViewMatrix())); // remove translation from the view matrix
-	//skyboxShader->setMat4("view", view);
-	//skyboxShader->setMat4("projection", projection);
-	//// skybox cube
-	//glBindVertexArray(skyboxVAO);
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-	//glDrawArrays(GL_TRIANGLES, 0, 36);
-	//glBindVertexArray(0);
-	//glDepthFunc(GL_LESS); // set depth function back to default
-	//glDeleteVertexArrays(1, &skyboxVAO);
-	//glDeleteBuffers(1, &skyboxVAO);
-	//----------
 
 	glColor3f(1.0, 0.0, 0.0);
 	glMatrixMode(GL_MODELVIEW);
@@ -1288,8 +1148,6 @@ void glut_display_func()
 					}
 
 					glBegin(GL_TRIANGLES);
-					//glNormal3i(currentMesh.Vertices[i].Normal.X, currentMesh.Vertices[i].Normal.Y, Loader.LoadedVertices[i].Normal.Z);
-					//std::cout << currentMesh.Indices[0] << " " << currentMesh.Vertices[i].Position.Y << " " << currentMesh.Vertices[i].Position.Z << std::endl;
 					glm::vec3 Ka(currentMesh.MeshMaterial.Ka.X, currentMesh.MeshMaterial.Ka.Y, currentMesh.MeshMaterial.Ka.Z);
 					glm::vec3 Kd(currentMesh.MeshMaterial.Kd.X, currentMesh.MeshMaterial.Kd.Y, currentMesh.MeshMaterial.Kd.Z);
 					glm::vec3 Ks(currentMesh.MeshMaterial.Ks.X, currentMesh.MeshMaterial.Ks.Y, currentMesh.MeshMaterial.Ks.Z);
@@ -1353,6 +1211,7 @@ void glut_display_func()
 	for (int i = 0; i < lightVector.size(); i++) {
 		createLight(lightVector[i]);
 	}
+
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
 
@@ -1362,7 +1221,6 @@ void glut_display_func()
 		glColor4f(0.5, 0.6, 1, 1);
 		glPointSize(10);
 		if (PositionalLight* posLight = dynamic_cast<PositionalLight*>(lightVector[selectedLight])) {
-			//std::cout << pointLight->getLightDirection().x << " " << pointLight->getLightDirection().y << " " << pointLight->getLightDirection().z << std::endl;
 			glColor4f(0.9, 0.7, 0.1, 1);
 			glBegin(GL_POINTS);
 			glVertex4fv(glm::value_ptr(glm::vec4(posLight->getLightDirection(), 1.0f)));
@@ -1384,7 +1242,6 @@ void glut_display_func()
 			glVertex4fv(glm::value_ptr(glm::vec4(dirLight->getLightDirection(), 1.0f)));
 			glVertex3fv(glm::value_ptr(glm::vec3(dirLight->getLightPosition())));
 			glEnd();
-			//glPointSize(5);
 			glColor4f(0.9, 0.7, 0.1, 1);
 			glBegin(GL_POINTS);
 			glVertex4fv(glm::value_ptr(glm::vec4(dirLight->getLightDirection(), 1.0f)));
@@ -1443,86 +1300,4 @@ objl::Loader* loadObject(const char* path, std::string objectName) {
 		return NULL;
 	}
 	return loader;
-}
-
-void loadObj(const char* path) {
-	// Initialize Loader
-
-	// Load .obj File
-	bool loadout = Loader.LoadFile(path);
-
-	// Check to see if it loaded
-
-	// If so continue
-	if (loadout)
-	{
-		// Create/Open e1Out.txt
-		std::ofstream file("e1Out.txt");
-
-		// Go through each loaded mesh and out its contents
-		for (int i = 0; i < Loader.LoadedMeshes.size(); i++)
-		{
-			// Copy one of the loaded meshes to be our current mesh
-			objl::Mesh curMesh = Loader.LoadedMeshes[i];
-
-			// Print Mesh Name
-			file << "Mesh " << i << ": " << curMesh.MeshName << "\n";
-
-			// Print Vertices
-			file << "Vertices:\n";
-
-			// Go through each vertex and print its number,
-			//  position, normal, and texture coordinate
-			for (int j = 0; j < curMesh.Vertices.size(); j++)
-			{
-				file << "V" << j << ": " <<
-					"P(" << curMesh.Vertices[j].Position.X << ", " << curMesh.Vertices[j].Position.Y << ", " << curMesh.Vertices[j].Position.Z << ") " <<
-					"N(" << curMesh.Vertices[j].Normal.X << ", " << curMesh.Vertices[j].Normal.Y << ", " << curMesh.Vertices[j].Normal.Z << ") " <<
-					"TC(" << curMesh.Vertices[j].TextureCoordinate.X << ", " << curMesh.Vertices[j].TextureCoordinate.Y << ")\n";
-			}
-
-			// Print Indices
-			file << "Indices:\n";
-
-			// Go through every 3rd index and print the
-			//	triangle that these indices represent
-			for (int j = 0; j < curMesh.Indices.size(); j += 3)
-			{
-				file << "T" << j / 3 << ": " << curMesh.Indices[j] << ", " << curMesh.Indices[j + 1] << ", " << curMesh.Indices[j + 2] << "\n";
-			}
-
-			// Print Material
-			file << "Material: " << curMesh.MeshMaterial.name << "\n";
-			file << "Ambient Color: " << curMesh.MeshMaterial.Ka.X << ", " << curMesh.MeshMaterial.Ka.Y << ", " << curMesh.MeshMaterial.Ka.Z << "\n";
-			file << "Diffuse Color: " << curMesh.MeshMaterial.Kd.X << ", " << curMesh.MeshMaterial.Kd.Y << ", " << curMesh.MeshMaterial.Kd.Z << "\n";
-			file << "Specular Color: " << curMesh.MeshMaterial.Ks.X << ", " << curMesh.MeshMaterial.Ks.Y << ", " << curMesh.MeshMaterial.Ks.Z << "\n";
-			file << "Specular Exponent: " << curMesh.MeshMaterial.Ns << "\n";
-			file << "Optical Density: " << curMesh.MeshMaterial.Ni << "\n";
-			file << "Dissolve: " << curMesh.MeshMaterial.d << "\n";
-			file << "Illumination: " << curMesh.MeshMaterial.illum << "\n";
-			file << "Ambient Texture Map: " << curMesh.MeshMaterial.map_Ka << "\n";
-			file << "Diffuse Texture Map: " << curMesh.MeshMaterial.map_Kd << "\n";
-			file << "Specular Texture Map: " << curMesh.MeshMaterial.map_Ks << "\n";
-			file << "Alpha Texture Map: " << curMesh.MeshMaterial.map_d << "\n";
-			file << "Bump Map: " << curMesh.MeshMaterial.map_bump << "\n";
-
-			// Leave a space to separate from the next mesh
-			file << "\n";
-		}
-
-		// Close File
-		file.close();
-	}
-	// If not output an error
-	else
-	{
-		// Create/Open e1Out.txt
-		std::ofstream file("e1Out.txt");
-
-		// Output Error
-		file << "Failed to Load File. May have failed to find it or it was not an .obj file.\n";
-
-		// Close File
-		file.close();
-	}
 }

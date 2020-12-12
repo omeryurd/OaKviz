@@ -20,7 +20,7 @@
 void init_window(int argc, char** argv);
 void init_other();
 void showMainMenu();
-void loadObj(const char* path);
+//void loadObj(const char* path);
 void my_display_code(void);
 void glut_display_func(void);
 void normalizeCoordinates(void);
